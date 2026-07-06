@@ -14,3 +14,7 @@ CLAUDE.md
 
 # Generated / downloaded artifacts (reproducible from scripts)
 data/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
