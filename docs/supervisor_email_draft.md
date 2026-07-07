@@ -1,8 +1,19 @@
-# Follow-up email to Dr. Shvets (draft — review and send from your own account)
+# Follow-up email to Dr. Shvets — SENT; replied 2026-07-07
 
-> Context: first email sent mid-June, no reply after ~3 weeks. This one is a
-> follow-up: short progress report, decisions taken by default where possible,
-> and a single main question so it can be answered in one line.
+> **Status: closed.** Reply received 2026-07-07. Key answers, as recorded in the
+> project plan (§3.8):
+> - June–July busy for her (conference presentations + grant finalisation) — the
+>   earlier silence was workload, not disinterest.
+> - "Good progress, choices seem reasonable" → base model / pipeline / dataset
+>   defaults endorsed.
+> - **RQ direction delegated:** "It's your project… decide based on what you find
+>   most interesting and feasible." Working decision: RQ-a primary, RQ-b second axis.
+> - **User study ruled out** (ethics approval impractical in scope) → study the
+>   interaction aspect **through objective evaluation** (E5 reframed).
+> - Venues: check deadlines myself → checked 2026-07-07: NeurIPS Creative AI
+>   Aug 3 2026 (stretch); NIME 2027 ~Jan/Feb (main target); AIMC 2027 (backup).
+>
+> Original draft kept below for the record.
 
 ---
 
