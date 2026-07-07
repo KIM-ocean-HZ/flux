@@ -205,7 +205,30 @@ accept/reject/regenerate 闭环。
 
 ---
 
-## 五、快速复现命令（备忘）
+## 五（补充，2026-07-06 第二次会话）：A/B 试验与方向修正
+
+试听反馈（"15 轨大杂烩，难听"）触发了一轮修正，全部已落地：
+
+1. **乐器约束解码原型**：`research/pipeline.py` 新增 `instrument_constraint`
+   （上下文管理器，替换 anticipation 采样器的乐器掩码钩子），`run()` 新增
+   `model_name / allowed_instruments / tag / model` 参数。
+2. **2×2 A/B**（`research/ab_test.py`）：small/medium × 无约束/约束{钢琴,贝斯,鼓}。
+   结论：约束一步把 15 轨大杂烩收敛成钢琴+鼓（`ab_small_constrained.mid`，
+   当前听感基准）；medium 对玩具旋律反而沉默（4–12 事件）——《小星星》7 秒
+   裸旋律对 Lakh 训练的模型是分布外输入，Phase 1 必须换真实旋律评估（任务 D4）。
+3. **踩坑 7**：采样偶发越界 token 会崩 `events_to_midi` 断言 → `sanitize_events`
+   生成后清洗畸形三元组并告警（批量实验不能因单 token 中断）。
+4. **产品语义修正**：纵向 = 用户指定目标轨的伴奏生成（约束解码硬保证）；
+   横向 = 单轨续写。`docs/vertical_slice_spec.md` 已更新，协议加 `target_instrument`。
+5. **导师邮件重写**为跟进口吻（6 月中首封未回）：进展汇报 + 已采默认决定 +
+   仅一个主问题（RQ 三选一），署名 Hanze Jin。见 `docs/supervisor_email_draft.md`。
+6. **计划文档修订**（本地 plans/，不入库）：EN/CN 计划标注 Phase 0 完成与实测结果、
+   Phase 1–3 重排日期（P1: 7/7–8/2）、RQ 收敛、决策记录；新增 `plans/flux_phase1.xlsx`
+   （16 任务 + 候选 RQ 映射 + 新增决策三个 sheet）。
+7. **Khala 调研结论**（详见会话记录）：音频域歌曲生成 SOTA，不接入系统，
+   写进论文 related work 做 gap 反衬。
+
+## 六、快速复现命令（备忘）
 
 ```sh
 uv sync                                  # 装环境（含钉版 music21<9）

@@ -1,65 +1,65 @@
-# C1 — Draft email to Dr. Anna Shvets (§3.8 open questions)
+# Follow-up email to Dr. Shvets (draft — review and send from your own account)
 
-> Draft only — review, adjust tone/details, and send from your own account.
-> Status update reflects actual Phase 0 results in this repo.
+> Context: first email sent mid-June, no reply after ~3 weeks. This one is a
+> follow-up: short progress report, decisions taken by default where possible,
+> and a single main question so it can be answered in one line.
 
 ---
 
-**Subject:** FLUX project — Phase 0 complete; five methodology questions before Phase 1
+**Subject:** Re: FLUX — kicking off Phase 0, a few questions to align the methodology
 
 Dear Dr. Shvets,
 
-I hope you are well. Over the past weeks I have completed the foundation phase of
-the project we discussed, and I would like to confirm a few methodology decisions
-with you before starting the fine-tuning work.
+Following up on my email from mid-June — I know summer is a busy time, so rather
+than wait I kept going and made the calls I felt I could make on my own. I'd
+rather show you something concrete anyway. Three weeks in, this is where the
+project stands:
 
-**Where the project stands.** I have a reproducible `uv` environment (Python 3.12)
-with the full pipeline running end-to-end on my machine: the Anticipatory Music
-Transformer (Stanford CRFM, `music-small-800k`) generates accompaniment for a
-given melody via its control-token mechanism, the output is written to MIDI, and
-muspy computes objective metrics (pitch-class entropy, scale consistency, pitch
-range, polyphony, groove consistency, etc.), logged to CSV. Generation currently
-runs at roughly real-time speed on Apple Silicon (about 6.4 s to accompany a 7 s
-melody), which is encouraging for the interactive/on-device angle. As a starter
-dataset I am using the Essen Folk Song Database (10,457 monophonic melodies) as a
-pool of input melodies, loaded through muspy.
+- The pipeline now runs end to end on my laptop: a melody goes in, the model
+  generates accompaniment around it, and muspy computes objective metrics
+  (pitch-class entropy, scale consistency, polyphony and so on) into a CSV.
+- For the base model I went with the Anticipatory Music Transformer (Stanford's
+  music-small/medium-800k checkpoints). Its control-token mechanism does
+  accompaniment and infilling natively, which maps directly onto the vertical/
+  horizontal suggestions from my May draft. Apache-2.0, runs fully locally.
+- Speed looks promising for the real-time angle: about 6.4s to generate 7s of
+  accompaniment on my M-series MacBook, before any optimisation.
+- ComfyUI: I tried to see how it would fit a symbolic pipeline and couldn't find
+  a clean way (it is quite diffusion/image-centric, and the evaluation tools are
+  all symbolic), so I defaulted to plain HuggingFace + peft as I mentioned I
+  might. Very happy to revisit if you had a specific workflow in mind.
+- mgeval would not build on modern macOS (Python-2-era dependencies), so muspy's
+  built-in metrics are my main line for now. For data I'm using the Essen
+  folk-song database (10k monophonic melodies) as evaluation inputs, and I plan
+  a Lakh MIDI subset for the LoRA fine-tuning, since that is AMT's training
+  domain.
 
-**My questions:**
+The one question I would really value your judgment on: from the first hands-on
+results I can see three places the dissertation's contribution could sit, and
+I'm unsure which is the most defensible —
 
-1. **ComfyUI.** You mentioned ComfyUI as a possible experimentation harness. Since
-   my pipeline is symbolic (MIDI/event tokens) and the evaluation tools are
-   symbolic too, I could not find an obvious fit — did you have a specific
-   symbolic-music workflow in mind, or would you be comfortable with a plain
-   Hugging Face `transformers` + `peft` pipeline instead?
+(a) **control**: comparing mechanisms for track-targeted generation — soft
+control via control tokens, hard constrained decoding (masking the sampler so
+generated notes can only land on the instrument the user chose — I have a first
+prototype of this working), and LoRA-learned control — evaluated on objective
+metrics;
 
-2. **Base model.** Is the Anticipatory Music Transformer acceptable as the base
-   model? It is open (Apache 2.0), multi-track, runs locally, and its
-   control-token design maps directly onto the accompaniment and conditioned-
-   continuation behaviors I need. The alternatives I considered (Music
-   Transformer, MMM) seem weaker on either conditioning or tooling.
+(b) **efficiency**: the quality-vs-latency trade-off for interactive use on
+consumer hardware — as far as I can tell the symbolic generation literature
+almost never measures latency;
 
-3. **Dataset for fine-tuning.** For LoRA fine-tuning I am considering a subset of
-   the Lakh MIDI dataset (AMT's own training domain) — possibly genre-scoped to
-   keep it tractable. Does that sound right, or would you recommend a different
-   corpus?
+(c) **interaction**: whether suggest-but-never-impose actually helps a
+producer's sense of control — though I suspect a proper user study is too much
+on top of the rest for one year.
 
-4. **Evaluation.** The original mgeval is Python-2-era and does not install on
-   modern macOS, so I am using muspy's built-in objective metrics as the main
-   line (they cover the same musically-informed families). Is that sufficient,
-   or do you want a specific mgeval metric (e.g., pitch-class transition
-   matrices) reproduced? Relatedly: do you envision a small user study later, or
-   are objective metrics sufficient for the dissertation?
+Even a one-line steer on which axis looks strongest to you would set my
+direction for the next month. The two smaller questions from June still stand
+(are objective metrics alone defensible; which venue and deadline should I
+shape the paper draft toward — NIME, AIMC?).
 
-5. **Target venue.** For the paper draft, which venue would you suggest aiming at
-   (NIME, AIMC, TENOR, EVA...)? Knowing the deadline would help me plan the
-   experiment schedule backwards from it.
-
-I would be happy to show the running pipeline in a short meeting if useful.
+I'll keep going in the meantime — next up is a batch baseline over the Essen
+melodies and a first LoRA fine-tune. If a short call is easier than email, I'm
+free whenever suits you, and I can show the pipeline running.
 
 Best regards,
-Hanze (Ocean) Jin
-
----
-
-*Repo state backing this email: see `research/pipeline.py` (end-to-end),
-`docs/mgeval_decision.md` (Q4), `docs/representation_decision.md` (Q2/Q3).*
+Hanze Jin
