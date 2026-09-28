@@ -1,4 +1,17 @@
+> **历史归档 · 2026-09-26 · 不作为当前执行指令。**
+> 原位置：`docs/vertical_slice_spec.md`。撤销 locked 状态。允许乐器集合不保证指定目标轨有输出；当时 API 无 target_instrument。新多轨与播放需求也需要更新协议和前端，不能承诺只替换后端。
+> 当前入口：[项目 README](../../../README.md)；[归档纠错索引](../../README.md)。正文保留历史原文，相对路径和旧命令按原位置解释。
+
+<!-- ARCHIVED ORIGINAL BELOW -->
 # P1 — FLUX vertical-slice spec (locked; behaviors refined 2026-07)
+
+> **Implementation status as of 2026-08-24 — this is a specification, not a status
+> report.** The described target-track slice is **not yet implemented**: the backend is
+> still a random stub, `SuggestRequest` has no `target_instrument` field, and the UI has
+> no instrument selector. What the Phase 0 pilot validated is narrower than the wording
+> below: `instrument_constraint` restricts generation to an *allowed instrument set*, and
+> in the pilot neither constrained run placed a note on the bass. Delivering this spec is
+> Milestone 1 of [PHASE1_RESTART_2026-09.md](PHASE1_RESTART_2026-09.md).
 
 **One line:** a web piano-roll where the user enters a melody, picks a **target
 track/instrument**, requests **ghost suggestions for that track**, and can

@@ -20,3 +20,12 @@ dependencies = [
 
 [tool.uv.sources]
 anticipation = { git = "https://github.com/jthickstun/anticipation.git" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

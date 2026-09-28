@@ -1,9 +1,8 @@
 """P2 — FLUX demo backend: a stub that returns fake ghost-accompaniment notes.
 
-The interface is the real one (JSON notes in, JSON ghost notes out); only the
-internals are fake. In Phase 1 the body of `suggest` is replaced by a call into
-the shared model (research.generate / research.pipeline) — the frontend and the
-protocol stay untouched.
+Suggestions are still fake. The built frontend is served at the backend's root
+URL; Vite on port 5173 remains available for frontend development. The planned
+multi-track model integration will also need a richer note/request schema.
 
 Run:  uv run uvicorn backend.main:app --reload --port 8000
 """
@@ -11,12 +10,34 @@ Run:  uv run uvicorn backend.main:app --reload --port 8000
 from __future__ import annotations
 
 import random
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 app = FastAPI(title="FLUX demo backend (stub)")
+FRONTEND_DIST = Path(__file__).resolve().parents[1] / "frontend" / "dist"
+
+app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets", check_dir=False),
+          name="frontend-assets")
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def frontend():
+    index = FRONTEND_DIST / "index.html"
+    if index.is_file():
+        return FileResponse(index)
+    return HTMLResponse("""<!doctype html><html lang="zh-CN"><meta charset="utf-8">
+<title>FLUX — 启动前端</title>
+<h1>后端已启动，前端尚未构建</h1>
+<p>在项目根目录执行以下命令，然后刷新本页：</p>
+<pre>cd frontend\nnpm ci\nnpm run build</pre>
+<p>开发界面也可以在另一个终端执行 <code>cd frontend &amp;&amp; npm run dev</code>，
+然后打开 <a href="http://localhost:5173">http://localhost:5173</a>。</p>
+<p><a href="/docs">查看 API 文档</a></p></html>""", status_code=503)
 
 # The Vite dev server origin; the demo is local-only at this stage.
 app.add_middleware(

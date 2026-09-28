@@ -1,3 +1,8 @@
+> **历史归档 · 2026-09-26 · 不作为当前执行指令。**
+> 原位置：`docs/representation_decision.md`。“10 ms 编码无损覆盖网格”表述过强。秒制量化可能损失节奏精度，当前 AMT 转换还不能保留独立同音色轨道身份及全部 MIDI 表情。
+> 当前入口：[项目 README](../../../README.md)；[归档纠错索引](../../README.md)。正文保留历史原文，相对路径和旧命令按原位置解释。
+
+<!-- ARCHIVED ORIGINAL BELOW -->
 # D2 — Initial music representation: align with AMT's arrival-time event encoding
 
 **Decision (one line):** For everything that touches the model, use the AMT

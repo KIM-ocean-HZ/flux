@@ -4,7 +4,7 @@ Why Essen: it is tiny (~1.7 MB download), openly mirrored, and consists of
 monophonic folk melodies — exactly the *input* side of the FLUX accompaniment
 task, so it doubles as a pool of test melodies for the end-to-end pipeline.
 The larger multi-track fine-tuning corpus (a Lakh MIDI subset, AMT's own
-training domain) is a Phase 1 decision; see docs/representation_decision.md.
+training domain) remains a research choice; see docs/RESEARCH_RESET_2026-09-26.md.
 """
 
 from __future__ import annotations

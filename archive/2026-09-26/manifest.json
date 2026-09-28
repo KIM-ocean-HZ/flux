@@ -1,0 +1,149 @@
+{
+  "date": "2026-09-26",
+  "records": [
+    {
+      "original_path": "README.md",
+      "archived_path": "archive/2026-09-26/README.md",
+      "original_sha256": "9cdb7ff9a10bd1760196ef300b54d870f8b248a90c965a1f56e3c38b00c9ffa6",
+      "original_bytes": 12523,
+      "notice": "旧状态和排期已被 2026-09-26 用户需求取代。原文中的测试数量、MPS 速度属于历史记录；更换 tag 不会隔离 pipeline_metrics.csv。",
+      "prefix_bytes": 454
+    },
+    {
+      "original_path": "docs/PHASE1_RESTART_2026-09.md",
+      "archived_path": "archive/2026-09-26/docs/PHASE1_RESTART_2026-09.md",
+      "original_sha256": "13702944229f8c52cd8fb8f005e6a9ec53a288230224307cc88d1609918ba38f",
+      "original_bytes": 12958,
+      "notice": "旧里程碑和不做播放等范围限制已失效。随机再生成不保证每次不同；新 tag 只隔离 MIDI/PNG，不隔离 CSV。",
+      "prefix_bytes": 457
+    },
+    {
+      "original_path": "docs/PROFESSOR_DEMO_RUNBOOK.md",
+      "archived_path": "archive/2026-09-26/docs/PROFESSOR_DEMO_RUNBOOK.md",
+      "original_sha256": "6bbb84453901938de78cc2051ac645be473b98cc1a6b6b7ea5cd8f14d8d63cad",
+      "original_bytes": 8963,
+      "notice": "旧版演示流程，不能作为当前产品能力或下一阶段计划。端口启动方式已有更新。",
+      "prefix_bytes": 427
+    },
+    {
+      "original_path": "docs/SUPERVISOR_HANDOVER_2026-09.md",
+      "archived_path": "archive/2026-09-26/docs/SUPERVISOR_HANDOVER_2026-09.md",
+      "original_sha256": "04e191bcedb09496e0354cd71287a64198c8b0ce2731cad669e5ef62be3bbcc0",
+      "original_bytes": 8663,
+      "notice": "保留导师交接背景；状态、时间表和待讨论研究问题仅代表当时，当前技术路线重新评估。",
+      "prefix_bytes": 444
+    },
+    {
+      "original_path": "docs/mgeval_decision.md",
+      "archived_path": "archive/2026-09-26/docs/mgeval_decision.md",
+      "original_sha256": "81c889e7a867cb8e1591534bbc99eec0fa2f1bbab538aa1dbd179f38cb38de23",
+      "original_bytes": 1332,
+      "notice": "保留历史选型理由；单曲 muspy 指标不等于音乐质量评分，也不能替代目标调性和轨道遵守率检查。",
+      "prefix_bytes": 442
+    },
+    {
+      "original_path": "docs/representation_decision.md",
+      "archived_path": "archive/2026-09-26/docs/representation_decision.md",
+      "original_sha256": "d40b19dc32aecde64b35bc0b1785779528cb6b807b41cf1ab84a638ceec07a81",
+      "original_bytes": 2061,
+      "notice": "“10 ms 编码无损覆盖网格”表述过强。秒制量化可能损失节奏精度，当前 AMT 转换还不能保留独立同音色轨道身份及全部 MIDI 表情。",
+      "prefix_bytes": 493
+    },
+    {
+      "original_path": "docs/supervisor_email_draft.md",
+      "archived_path": "archive/2026-09-26/docs/supervisor_email_draft.md",
+      "original_sha256": "aa0ab4066873f7b02e1e5f86cac1aeb83d058050dac5589fceabbc7aafb2f040",
+      "original_bytes": 4032,
+      "notice": "已发送并于 2026-07-07 收到回复的通信归档，不是待发邮件。目标轨硬保证表述不成立，会议日期未作本轮核实，文中计划微调没有完成。",
+      "prefix_bytes": 499
+    },
+    {
+      "original_path": "docs/vertical_slice_spec.md",
+      "archived_path": "archive/2026-09-26/docs/vertical_slice_spec.md",
+      "original_sha256": "60b51cc40d47ab994b20a5408e5040f75e83cfe8ae275a9297141446824d4854",
+      "original_bytes": 2981,
+      "notice": "撤销 locked 状态。允许乐器集合不保证指定目标轨有输出；当时 API 无 target_instrument。新多轨与播放需求也需要更新协议和前端，不能承诺只替换后端。",
+      "prefix_bytes": 515
+    },
+    {
+      "original_path": "docs/worklog_phase0_zh.md",
+      "archived_path": "archive/2026-09-26/docs/worklog_phase0_zh.md",
+      "original_sha256": "04fd586848d8d0c82b6db0f86c0f1ba8b641d3750f66cceb2f6d50afec24013f",
+      "original_bytes": 17880,
+      "notice": "历史记录中“约束解码硬保证目标轨”错误；medium 稀疏由分布外输入导致仅是未验证假设；试听描述不是系统评估。早期发邮件待办已被后文回复关闭。",
+      "prefix_bytes": 516
+    },
+    {
+      "original_path": "docs/worklog_v3_zh.md",
+      "archived_path": "archive/2026-09-26/docs/worklog_v3_zh.md",
+      "original_sha256": "1908f71e27551451991668a388fdb90b0716531466818a74c9a20f52f9099667",
+      "original_bytes": 4350,
+      "notice": "任务 A 实现记录保留。精确有理数不意味着任意缩放均落在固定 48 ticks 网格；20 个测试覆盖案例而非对所有可能输入的证明。该任务不再是生成路径的必经步骤。",
+      "prefix_bytes": 524
+    },
+    {
+      "original_path": "plans/FLUX_Project_Plan.md",
+      "archived_path": "archive/2026-09-26/plans/FLUX_Project_Plan.md",
+      "original_sha256": "3329ed347b59208b030f700451bc9ec96af26c605240d997624e8c9bf993f88b",
+      "original_bytes": 27971,
+      "notice": "旧总计划和时序已失效。LoRA 未开展，端上/低延迟领域空白和目标轨保证等泛化表述不可直接引用；导师邮件已获回复。",
+      "prefix_bytes": 474
+    },
+    {
+      "original_path": "plans/FLUX_Project_Plan_CN.md",
+      "archived_path": "archive/2026-09-26/plans/FLUX_Project_Plan_CN.md",
+      "original_sha256": "5df0b187744691eb089c76935d4784e90114a1fe0cbddaf3888cb917badff461",
+      "original_bytes": 25626,
+      "notice": "旧总计划和时序已失效。LoRA 未开展，端上/低延迟领域空白和目标轨保证等泛化表述不可直接引用；导师邮件已获回复。",
+      "prefix_bytes": 477
+    },
+    {
+      "original_path": "plans/FLUX_v3.md",
+      "archived_path": "archive/2026-09-26/plans/FLUX_v3.md",
+      "original_sha256": "d1ad3a457c35e0211f7448cd4599f1a0b23f9596fbcadaa1ac805d0283422fe4",
+      "original_bytes": 13438,
+      "notice": "旧产品策略已被本轮需求重设。“0 延迟、不可能出错”、硬保证目标轨等绝对表述不成立；训练式修复层尚未实现。文献/竞品和申请日期需要独立核实。",
+      "prefix_bytes": 509
+    },
+    {
+      "original_path": "plans/FLUX_research_overview.docx",
+      "archived_path": "archive/2026-09-26/plans/FLUX_research_overview.docx",
+      "original_sha256": "a198335f14c84c4815c515c7f2d05406463d65d5fa0da910727d8f0e3a53af10",
+      "original_bytes": 16219,
+      "notice": "2026 年 5 月研究构想，早于现有实现。用户研究、领域空白、实时性等是当时提案，不代表验证结果或当前路线。",
+      "notice_path": "archive/2026-09-26/plans/FLUX_research_overview.docx.NOTICE.md"
+    },
+    {
+      "original_path": "plans/FLUX_research_overview.pdf",
+      "archived_path": "archive/2026-09-26/plans/FLUX_research_overview.pdf",
+      "original_sha256": "27144d72e2530debb1d5e8363aa40cbb6b9b48cc881add524ea255b4e86e186f",
+      "original_bytes": 83440,
+      "notice": "2026 年 5 月研究构想的 PDF 版本，不代表当前实现或已证实研究结论。",
+      "notice_path": "archive/2026-09-26/plans/FLUX_research_overview.pdf.NOTICE.md"
+    },
+    {
+      "original_path": "plans/flux_phase0.xlsx",
+      "archived_path": "archive/2026-09-26/plans/flux_phase0.xlsx",
+      "original_sha256": "e19d0f3767019bc8337c5df678f2e7588ade371492c80163c6d650a56ca2ae28",
+      "original_bytes": 21836,
+      "notice": "旧任务表仍记 Python 3.11 和任务待开始；当前环境是 3.12，基础阶段已完成。不要按表内旧状态重新执行安装。",
+      "notice_path": "archive/2026-09-26/plans/flux_phase0.xlsx.NOTICE.md"
+    },
+    {
+      "original_path": "plans/flux_phase1.xlsx",
+      "archived_path": "archive/2026-09-26/plans/flux_phase1.xlsx",
+      "original_sha256": "53d8ba8f646434c665232cba34332684fc87579f454350ab57ed2d2f2ac69a4e",
+      "original_bytes": 13690,
+      "notice": "旧排期和训练任务不是完成记录。目标轨硬保证、分布外输入是稀疏原因、最佳听感等表述缺乏对应系统证据。",
+      "notice_path": "archive/2026-09-26/plans/flux_phase1.xlsx.NOTICE.md"
+    },
+    {
+      "original_path": "plans/~$flux_phase1.xlsx",
+      "archived_path": "archive/2026-09-26/plans/~$flux_phase1.xlsx",
+      "original_sha256": "a56509277035f865d54f697560634f21da3e36da0c983cc6f72ebb79ec3b73eb",
+      "original_bytes": 165,
+      "notice": "Office 临时锁定文件，仅保留原始文件，不是项目任务表。",
+      "notice_path": "archive/2026-09-26/plans/~$flux_phase1.xlsx.NOTICE.md"
+    }
+  ]
+}

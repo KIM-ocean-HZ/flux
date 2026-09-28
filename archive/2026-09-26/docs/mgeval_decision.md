@@ -1,3 +1,8 @@
+> **历史归档 · 2026-09-26 · 不作为当前执行指令。**
+> 原位置：`docs/mgeval_decision.md`。保留历史选型理由；单曲 muspy 指标不等于音乐质量评分，也不能替代目标调性和轨道遵守率检查。
+> 当前入口：[项目 README](../../../README.md)；[归档纠错索引](../../README.md)。正文保留历史原文，相对路径和旧命令按原位置解释。
+
+<!-- ARCHIVED ORIGINAL BELOW -->
 # V2 — Evaluation tooling decision: muspy as the main line
 
 **Decision (one line):** Use **muspy's built-in objective metrics as the primary,

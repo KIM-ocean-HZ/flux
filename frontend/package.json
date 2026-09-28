@@ -6,14 +6,21 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
+    "midi-file": "1.2.4",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "spessasynth_lib": "4.3.14"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^6.0.0"
+    "jsdom": "30.1.1",
+    "playwright": "1.63.0",
+    "spessasynth_core": "4.3.22",
+    "vite": "^6.0.0",
+    "vitest": "5.0.2"
   }
 }

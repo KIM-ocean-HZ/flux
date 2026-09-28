@@ -1,3 +1,8 @@
+> **历史归档 · 2026-09-26 · 不作为当前执行指令。**
+> 原位置：`docs/supervisor_email_draft.md`。已发送并于 2026-07-07 收到回复的通信归档，不是待发邮件。目标轨硬保证表述不成立，会议日期未作本轮核实，文中计划微调没有完成。
+> 当前入口：[项目 README](../../../README.md)；[归档纠错索引](../../README.md)。正文保留历史原文，相对路径和旧命令按原位置解释。
+
+<!-- ARCHIVED ORIGINAL BELOW -->
 # Follow-up email to Dr. Shvets — SENT; replied 2026-07-07
 
 > **Status: closed.** Reply received 2026-07-07. Key answers, as recorded in the
