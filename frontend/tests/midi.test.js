@@ -1,9 +1,11 @@
 import { parseMidi, writeMidi } from 'midi-file'
 import { describe, expect, it } from 'vitest'
+import { translate } from '../src/i18n/translate.js'
 import { makeChord } from '../src/music/chords.js'
 import { exportMidi, importMidi, planExport } from '../src/music/midi.js'
 import { addNotes, addTrack, createExampleProject, createProject, placeChord, setTempo, setTimeSignature, trackNotes } from '../src/music/project.js'
 
+const zh = (msg) => translate('zh', msg)
 const simple = (tracks) => tracks.map((t) => ({
   name: t.name, program: t.program, isDrum: t.isDrum, volume: t.volume,
   notes: trackNotes(t).map((n) => [n.pitch, n.startTick, n.durationTick, n.velocity]).sort((a, b) => a[1] - b[1] || a[0] - b[0]),
@@ -50,11 +52,11 @@ describe('MIDI export (A-06, CH-08)', () => {
     for (let i = 0; i < 15; i++) p = addTrack(p, { name: `t${i}`, program: i }).project
     const plan = planExport(p)
     expect(plan.ok).toBe(false)
-    expect(plan.errors[0]).toMatch(/16 条音高轨/)
+    expect(zh(plan.errors[0])).toMatch(/16 条音高轨/)
     expect(() => exportMidi(p)).toThrow()
     let q = band()
     q = addTrack(q, { name: '鼓 2', program: 0, isDrum: true }).project
-    expect(planExport(q).warnings[0]).toMatch(/共用第 10 通道/)
+    expect(zh(planExport(q).warnings[0])).toMatch(/共用第 10 通道/)
   })
 
   it('round-trips notes, tracks, programs, velocity, tempo and meter through import', () => {
@@ -100,7 +102,7 @@ describe('MIDI import (A-06)', () => {
     ])
     const r = importMidi(mid)
     expect(r.ok).toBe(true)
-    const text = r.limitations.join('\n')
+    const text = r.limitations.map(zh).join('\n')
     expect(text).toMatch(/延音踏板 CC64 ×1/)
     expect(text).toMatch(/弯音 ×1/)
     expect(text).toMatch(/速度变化 1 处/)
@@ -113,7 +115,8 @@ describe('MIDI import (A-06)', () => {
     const mid = build(384, [[ev(0, 'noteOn', { channel: 0, noteNumber: 60, velocity: 90 }), ev(1, 'noteOff', { channel: 0, noteNumber: 60, velocity: 0 }), ev(0, 'endOfTrack')]])
     const r = importMidi(mid)
     expect(trackNotes(r.project.tracks[0])[0]).toMatchObject({ startTick: 0, durationTick: 3 })
-    expect(r.limitations.join()).toMatch(/PPQ 384：1 个事件/)
+    expect(r.limitations.map(zh).join()).toMatch(/PPQ 384：1 个事件/)
+    expect(translate('en', r.limitations[0])).toMatch(/^Source PPQ 384: 1 event time rounded/)
   })
 
   it('splits a format-0 file by channel and marks channel 10 as drums', () => {
@@ -124,12 +127,12 @@ describe('MIDI import (A-06)', () => {
       ev(0, 'endOfTrack')]], 0)
     const r = importMidi(mid)
     expect(r.project.tracks.map((t) => [t.program, t.isDrum])).toEqual([[33, false], [0, true]])
-    expect(r.notices.join()).toMatch(/120 BPM/)
+    expect(r.notices.map(zh).join()).toMatch(/120 BPM/)
   })
 
   it('rejects files it cannot read instead of producing a partial project', () => {
     expect(importMidi(Uint8Array.from([1, 2, 3])).ok).toBe(false)
     const smpte = Uint8Array.from(writeMidi({ header: { format: 1, numTracks: 1, framesPerSecond: 25, ticksPerFrame: 40 }, tracks: [[ev(0, 'endOfTrack')]] }))
-    expect(importMidi(smpte).errors[0]).toMatch(/SMPTE/)
+    expect(zh(importMidi(smpte).errors[0])).toMatch(/SMPTE/)
   })
 })

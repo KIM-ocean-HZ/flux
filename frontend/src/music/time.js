@@ -11,16 +11,17 @@ export const TS_PRESETS = [
   { numerator: 6, denominator: 8 },
 ]
 
-// Note values in ticks, used by the editing grid and the step-input duration.
+// Note values in ticks, used by the editing grid and the step-input duration
+// (the interface names them with the message key noteValue.<id>).
 export const NOTE_VALUES = [
-  { id: '1/1', label: '全音符', ticks: PPQ * 4 },
-  { id: '1/2', label: '1/2', ticks: PPQ * 2 },
-  { id: '1/4', label: '1/4', ticks: PPQ },
-  { id: '1/8', label: '1/8', ticks: PPQ / 2 },
-  { id: '1/16', label: '1/16', ticks: PPQ / 4 },
-  { id: '1/4T', label: '1/4 三连音', ticks: (PPQ * 2) / 3 },
-  { id: '1/8T', label: '1/8 三连音', ticks: PPQ / 3 },
-  { id: '1/16T', label: '1/16 三连音', ticks: PPQ / 6 },
+  { id: '1/1', ticks: PPQ * 4 },
+  { id: '1/2', ticks: PPQ * 2 },
+  { id: '1/4', ticks: PPQ },
+  { id: '1/8', ticks: PPQ / 2 },
+  { id: '1/16', ticks: PPQ / 4 },
+  { id: '1/4T', ticks: (PPQ * 2) / 3 },
+  { id: '1/8T', ticks: PPQ / 3 },
+  { id: '1/16T', ticks: PPQ / 6 },
 ]
 export const noteValueTicks = (id) => NOTE_VALUES.find((v) => v.id === id)?.ticks
 
@@ -77,9 +78,11 @@ export function pulsesBetween(startTick, endTick, ts) {
   return out
 }
 
-/** 1-based "bar.pulse.sixteenth" position text. Negative ticks show the count-in. */
+/** Pulses left in the count-in at a negative tick. */
+export const countInPulses = (tick, ts) => Math.ceil(-tick / pulse(ts).ticks)
+
+/** 1-based "bar.pulse.sixteenth" position text for a non-negative tick. */
 export function formatPosition(tick, ts) {
-  if (tick < 0) return `倒数 ${Math.ceil(-tick / pulse(ts).ticks)}`
   const bar = Math.floor(tick / ticksPerBar(ts))
   const inBar = tick - bar * ticksPerBar(ts)
   const p = pulse(ts)

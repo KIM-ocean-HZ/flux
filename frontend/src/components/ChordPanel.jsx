@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useI18n } from '../i18n/I18n.jsx'
+import { m } from '../i18n/translate.js'
 import { ALL_KEYS, keyLabel, sameKey } from '../music/analysis.js'
 import {
   bassOptions, CHORD_TYPES, chordSymbol, chordToneSpellings, chordType, displaySpelling, eventSymbol, makeChord,
@@ -6,9 +8,6 @@ import {
 } from '../music/chords.js'
 import * as P from '../music/project.js'
 import { parsePosition, pulse, ticksPerBar } from '../music/time.js'
-
-const STATUS = { clear: '明确匹配', ambiguous: '多种解释', undetermined: '未确定', unsupported: '无法识别', empty: '无音' }
-const DEGREE = { 3: '三音', 5: '五音', 7: '七音', 2: '二音', 4: '四音', 6: '六音', 9: '九音', 11: '十一音' }
 
 function posText(tick, ts) {
   const bar = ticksPerBar(ts)
@@ -18,47 +17,49 @@ function posText(tick, ts) {
 }
 
 function KeySection({ project, analysis, apply, hasEvidence }) {
+  const { t } = useI18n()
   const kc = project.keyContext
   const confirmed = kc?.status === 'confirmed'
   const cands = analysis.keyCandidates
   const topScore = cands[0]?.score ?? 0
-  const confirm = (key, source) => apply(`确认调性 ${keyLabel(key)}`, (p) => P.setKeyContext(p, {
+  const confirm = (key, source) => apply(m('label.confirmKey', { key: keyLabel(key) }), (p) => P.setKeyContext(p, {
     tonicPc: key.tonicPc, tonicSpelling: key.tonicSpelling, mode: key.mode, source, status: 'confirmed',
   }))
   let line
-  if (confirmed) line = `${keyLabel(kc)}（已确认 · ${kc.source === 'user' ? '手选' : '采纳推测'}）`
-  else if (analysis.keyStatus === 'insufficient') line = '证据不足：暂不推测唯一调性（孤立和弦或音符太少）'
-  else if (analysis.keyStatus === 'ambiguous') line = `推测：${keyLabel(cands[0])}／${keyLabel(cands[1])}（接近，可纠正）`
-  else line = `推测：${keyLabel(cands[0])}（可纠正）`
+  if (confirmed) line = t('key.confirmedLine', { key: keyLabel(kc), how: m(kc.source === 'user' ? 'key.byHand' : 'key.adopted') })
+  else if (analysis.keyStatus === 'insufficient') line = t('key.insufficient')
+  else if (analysis.keyStatus === 'ambiguous') line = t('key.inferredClose', { a: keyLabel(cands[0]), b: keyLabel(cands[1]) })
+  else line = t('key.inferred', { key: keyLabel(cands[0]) })
   return (
-    <section className="panel-section" aria-label="调性">
-      <h3>调性</h3>
+    <section className="panel-section" aria-label={t('key.title')}>
+      <h3>{t('key.title')}</h3>
       <p data-testid="key-status">{line}</p>
       <div className="chips">
         {hasEvidence && cands.map((k) => (
           <button key={`${k.tonicPc}${k.mode}`} type="button" aria-pressed={confirmed && sameKey(k, kc)}
-            onClick={() => confirm(k, 'inferred')} title="采纳并确认此调性（只改变分析，不移调）">
-            {keyLabel(k)}{topScore - k.score < 0.1 && !sameKey(k, cands[0]) ? ' · 接近' : ''}
+            onClick={() => confirm(k, 'inferred')} title={t('key.adoptTitle')}>
+            {t(keyLabel(k))}{topScore - k.score < 0.1 && !sameKey(k, cands[0]) ? t('key.closeSuffix') : ''}
           </button>
         ))}
       </div>
       <div className="row">
-        <select aria-label="手动选择调性" value={confirmed ? `${kc.tonicPc}:${kc.mode}` : ''}
+        <select aria-label={t('key.manualAria')} value={confirmed ? `${kc.tonicPc}:${kc.mode}` : ''}
           onChange={(e) => {
             if (!e.target.value) return
             const [pc, mode] = e.target.value.split(':')
             confirm(ALL_KEYS.find((k) => k.tonicPc === Number(pc) && k.mode === mode), 'user')
           }}>
-          <option value="">手动选择调性…</option>
-          {ALL_KEYS.map((k) => <option key={`${k.tonicPc}:${k.mode}`} value={`${k.tonicPc}:${k.mode}`}>{keyLabel(k)}</option>)}
+          <option value="">{t('key.manualPlaceholder')}</option>
+          {ALL_KEYS.map((k) => <option key={`${k.tonicPc}:${k.mode}`} value={`${k.tonicPc}:${k.mode}`}>{t(keyLabel(k))}</option>)}
         </select>
-        {confirmed && <button type="button" onClick={() => apply('解除调性确认', (p) => P.setKeyContext(p, null))}>解除确认</button>}
+        {confirmed && <button type="button" onClick={() => apply(m('label.unconfirmKey'), (p) => P.setKeyContext(p, null))}>{t('key.unconfirm')}</button>}
       </div>
     </section>
   )
 }
 
 function ChordEditor({ project, initial, excludeId, onWrite, onDelete, onCopy, preview, onCancel, sourceNote }) {
+  const { t } = useI18n()
   const ts = project.timeSignature
   const [root, setRoot] = useState(initial.chord?.rootSpelling ?? 'C')
   const [typeId, setTypeId] = useState(initial.chord ? chordType(initial.chord).id : 'maj')
@@ -73,7 +74,7 @@ function ChordEditor({ project, initial, excludeId, onWrite, onDelete, onCopy, p
   const tones = chordToneSpellings(makeChord(root, typeId))
   const { tones: bassTones, others } = bassOptions(makeChord(root, typeId))
   const conflicts = rangeOk ? P.chordConflicts(project.chordTrack, startTick, endTick, excludeId) : []
-  const typeTones = CHORD_TYPES.find((t) => t.id === typeId).tones
+  const typeTones = CHORD_TYPES.find((ct) => ct.id === typeId).tones
   const degreeOf = (s) => typeTones[chordToneSpellings(makeChord(root, typeId)).indexOf(s)]?.[1]
   const event = nc
     ? { kind: 'no_chord', startTick, durationTick: endTick - startTick }
@@ -82,12 +83,12 @@ function ChordEditor({ project, initial, excludeId, onWrite, onDelete, onCopy, p
   return (
     <div className="chord-editor" data-testid="chord-editor">
       <div className="row">
-        <label>起点 <input value={startText} onChange={(e) => setStartText(e.target.value)} aria-label="和弦起点（小节.拍）" size={6} /></label>
-        <label>终点 <input value={endText} onChange={(e) => setEndText(e.target.value)} aria-label="和弦终点（小节.拍，不含）" size={6} /></label>
-        {!rangeOk && <span className="warn">范围无效</span>}
+        <label>{t('editor.start')} <input value={startText} onChange={(e) => setStartText(e.target.value)} aria-label={t('editor.startAria')} size={6} /></label>
+        <label>{t('editor.end')} <input value={endText} onChange={(e) => setEndText(e.target.value)} aria-label={t('editor.endAria')} size={6} /></label>
+        {!rangeOk && <span className="warn">{t('editor.badRange')}</span>}
       </div>
       <fieldset disabled={nc}>
-        <legend>根音</legend>
+        <legend>{t('editor.root')}</legend>
         <div className="root-grid">
           {ROOT_SPELLINGS.map((s) => (
             <button key={s} type="button" aria-pressed={root === s} onClick={() => { setRoot(s); setBass('') }}>{displaySpelling(s)}</button>
@@ -95,53 +96,57 @@ function ChordEditor({ project, initial, excludeId, onWrite, onDelete, onCopy, p
         </div>
       </fieldset>
       <fieldset disabled={nc}>
-        <legend>类型</legend>
+        <legend>{t('editor.type')}</legend>
         <div className="type-grid">
-          {CHORD_TYPES.map((t) => (
-            <button key={t.id} type="button" aria-pressed={typeId === t.id} onClick={() => { setTypeId(t.id); setBass('') }}
-              title={chordToneSpellings(makeChord(root, t.id)).map(displaySpelling).join(' ')}>
-              {t.label}<span className="muted"> {displaySpelling(root)}{t.suffix}</span>
+          {CHORD_TYPES.map((ct) => (
+            <button key={ct.id} type="button" aria-pressed={typeId === ct.id} onClick={() => { setTypeId(ct.id); setBass('') }}
+              title={chordToneSpellings(makeChord(root, ct.id)).map(displaySpelling).join(' ')}>
+              {t(`chordType.${ct.id}`)}<span className="muted"> {displaySpelling(root)}{ct.suffix}</span>
             </button>
           ))}
         </div>
       </fieldset>
       <div className="row">
-        <label>低音
-          <select value={bass} disabled={nc} onChange={(e) => setBass(e.target.value)} aria-label="低音">
-            <option value="">原位（根音 {displaySpelling(root)}）</option>
-            <optgroup label="转位：和弦内音">
-              {bassTones.map((s) => <option key={s} value={s}>{DEGREE[degreeOf(s)] ?? ''} {displaySpelling(s)}</option>)}
+        <label>{t('editor.bass')}
+          <select value={bass} disabled={nc} onChange={(e) => setBass(e.target.value)} aria-label={t('editor.bass')}>
+            <option value="">{t('editor.rootPosition', { root: displaySpelling(root) })}</option>
+            <optgroup label={t('editor.inversions')}>
+              {bassTones.map((s) => <option key={s} value={s}>{t(`degree.${degreeOf(s)}`)} {displaySpelling(s)}</option>)}
             </optgroup>
-            <optgroup label="指定斜杠低音">
+            <optgroup label={t('editor.slashBass')}>
               {others.map((s) => <option key={s} value={s}>{displaySpelling(s)}</option>)}
             </optgroup>
           </select>
         </label>
-        <label className="nc"><input type="checkbox" checked={nc} onChange={(e) => setNc(e.target.checked)} /> N.C.（明确无和弦）</label>
+        <label className="nc"><input type="checkbox" checked={nc} onChange={(e) => setNc(e.target.checked)} /> {t('editor.nc')}</label>
       </div>
       <p className="chord-summary">
         <strong data-testid="editor-symbol">{nc ? 'N.C.' : chordSymbol(chord)}</strong>
-        {!nc && <span className="muted"> = {tones.map(displaySpelling).join(' ')}{chord.bassPc != null ? `，低音 ${displaySpelling(chord.bassSpelling)}` : ''}</span>}
+        {!nc && <span className="muted"> = {tones.map(displaySpelling).join(' ')}{chord.bassPc != null ? t('editor.bassSuffix', { bass: displaySpelling(chord.bassSpelling) }) : ''}</span>}
       </p>
       {sourceNote}
       {conflicts.length > 0 && (
         <div className="conflicts" role="alert">
-          写入将替换：{conflicts.map((c) => `${eventSymbol(c.event)}（${posText(c.event.startTick, ts)}–${posText(c.event.startTick + c.event.durationTick, ts)}，${{ remove: '删除', split: '拆分', 'trim-end': '截短尾部', 'trim-start': '截短开头' }[c.action]}）`).join('；')}
+          {t('editor.willReplace')}{conflicts.map((c) => t('editor.conflict', {
+            symbol: eventSymbol(c.event), start: posText(c.event.startTick, ts), end: posText(c.event.startTick + c.event.durationTick, ts),
+            action: m(`editor.action.${c.action}`),
+          })).join(t('sep.clause'))}
         </div>
       )}
       <div className="row actions">
-        <button type="button" disabled={nc} onClick={() => preview(chord)}>试听</button>
-        <button type="button" className="primary" disabled={!rangeOk} onClick={() => onWrite(event)}>{excludeId ? '更新' : '写入和弦轨'}</button>
-        {onCopy && <button type="button" onClick={onCopy}>复制到后面</button>}
-        {onDelete && <button type="button" onClick={onDelete}>删除</button>}
-        <button type="button" onClick={onCancel}>取消</button>
+        <button type="button" disabled={nc} onClick={() => preview(chord)}>{t('chord.preview')}</button>
+        <button type="button" className="primary" disabled={!rangeOk} onClick={() => onWrite(event)}>{excludeId ? t('editor.update') : t('editor.write')}</button>
+        {onCopy && <button type="button" onClick={onCopy}>{t('editor.copyAfter')}</button>}
+        {onDelete && <button type="button" onClick={onDelete}>{t('editor.delete')}</button>}
+        <button type="button" onClick={onCancel}>{t('common.cancel')}</button>
       </div>
     </div>
   )
 }
 
 export default function ChordPanel({ project, harmony, chordSelection, setChordSelection, staleChords, analysisTrack,
-  analysisNotes, apply, writeChord, adoptSuggestion, adoptAllSuggestions, previewChord, defaultRange, say }) {
+  analysisNotes, apply, writeChord, adoptSuggestion, adoptAllSuggestions, previewChord, defaultRange, chordsToTrack, say }) {
+  const { t } = useI18n()
   const { analysis, suggestions } = harmony
   const ts = project.timeSignature
   const sel = chordSelection
@@ -167,28 +172,33 @@ export default function ChordPanel({ project, harmony, chordSelection, setChordS
 
   const suggestionCount = suggestions.filter((s) => s.detection.candidates.length).length
   const entry = selEvent ? analysis.chords[selEvent.id] : selSuggestion ? analysis.chords[`sugg:${selSuggestion.key}`] : null
+  const status = (s) => t(`detect.status.${s}`)
+  const list = (items) => items.join(t('sep.list'))
+  // Range for "chord track → MIDI": a range selection, or the selected chord event.
+  const range = sel?.type === 'range' ? sel
+    : selEvent ? { startTick: selEvent.startTick, endTick: selEvent.startTick + selEvent.durationTick } : null
 
   let body
   if (selSuggestion && !editingSuggestion) {
     const d = selSuggestion.detection
     body = (
       <div className="suggestion-box" data-testid="suggestion-box">
-        <p><strong>{selSuggestion.label ?? '未识别'}</strong> · {STATUS[d.status]} · {posText(selSuggestion.startTick, ts)}–{posText(selSuggestion.endTick, ts)}
-          <span className="muted">（识别建议，未确认前不进入生成控制）</span></p>
-        {d.reason && <p className="warn">{d.reason}</p>}
-        {entry && <p className="muted">级数：{entry.display} {entry.labels.join('；')}</p>}
+        <p><strong>{selSuggestion.label ?? t('chord.unrecognised')}</strong> · {status(d.status)} · {posText(selSuggestion.startTick, ts)}–{posText(selSuggestion.endTick, ts)}
+          <span className="muted">{t('chord.suggestionNote')}</span></p>
+        {d.reason && <p className="warn">{t(d.reason)}</p>}
+        {entry && <p className="muted">{t('chord.numeral')}{entry.display} {entry.labels.map((l) => t(l)).join(t('sep.clause'))}</p>}
         <ul className="candidates">
           {d.candidates.map((c) => (
             <li key={chordSymbol(c.chord)}>
-              <span>{chordSymbol(c.chord)}{c.complete ? '' : '（省略五音）'}</span>
-              <button type="button" onClick={() => previewChord(c.chord)}>试听</button>
-              <button type="button" className="primary" onClick={() => adoptSuggestion(selSuggestion, c)}>采用</button>
+              <span>{chordSymbol(c.chord)}{c.complete ? '' : t('chord.no5')}</span>
+              <button type="button" onClick={() => previewChord(c.chord)}>{t('chord.preview')}</button>
+              <button type="button" className="primary" onClick={() => adoptSuggestion(selSuggestion, c)}>{t('chord.adopt')}</button>
             </li>
           ))}
         </ul>
         <div className="row actions">
-          <button type="button" onClick={() => setEditingSuggestion(true)}>手动修改…</button>
-          <button type="button" onClick={() => setChordSelection(null)}>关闭</button>
+          <button type="button" onClick={() => setEditingSuggestion(true)}>{t('chord.editManually')}</button>
+          <button type="button" onClick={() => setChordSelection(null)}>{t('common.close')}</button>
         </div>
       </div>
     )
@@ -197,25 +207,26 @@ export default function ChordPanel({ project, harmony, chordSelection, setChordS
       startTick: selSuggestion.startTick, durationTick: selSuggestion.endTick - selSuggestion.startTick, kind: 'chord',
       chord: selSuggestion.detection.candidates[0]?.chord,
     } : { startTick: sel.startTick, durationTick: sel.endTick - sel.startTick, kind: 'chord' })
+    const source = selEvent && (selEvent.source === 'manual' ? t('chord.source.manual') : selEvent.source === 'midi_detected' ? t('chord.source.detected') : selEvent.source)
     const sourceNote = selEvent && (
       <div className="source-note">
-        <span className="muted">来源：{selEvent.source === 'manual' ? '手选' : selEvent.source === 'midi_detected' ? 'MIDI 识别后确认' : selEvent.source} · 已确认，自动分析不会覆盖</span>
-        {entry && <div>级数：<strong>{entry.display}</strong>{entry.alternatives.length ? `（也可读作 ${entry.alternatives.join('、')}）` : ''} {entry.labels.join('；')}</div>}
+        <span className="muted">{t('chord.sourceLine', { source })}</span>
+        {entry && <div>{t('chord.numeral')}<strong>{entry.display}</strong>{entry.alternatives.length ? t('chord.alsoReadsList', { list: list(entry.alternatives) }) : ''} {entry.labels.map((l) => t(l)).join(t('sep.clause'))}</div>}
         {stale && (
           <div className="stale-box" role="alert" data-testid="stale-box">
-            ⚠ 输入已变化，可重新分析。
+            {t('chord.staleHead')}
             {reanalysis?.segment
-              ? <> 当前识别：<strong>{reanalysis.segment.label}</strong>（{STATUS[reanalysis.segment.detection.status]}）</>
-              : ' 此范围现在没有可识别的和弦。'}
+              ? <> {t('chord.nowDetected')}<strong>{reanalysis.segment.label}</strong>{t('chord.statusParen', { status: m(`detect.status.${reanalysis.segment.detection.status}`) })}</>
+              : t('chord.nothingNow')}
             <div className="row">
               {reanalysis?.segment && (
-                <button type="button" onClick={() => apply(`用新识别替换为 ${reanalysis.segment.label}`, (p) => P.updateChord(p, selEvent.id, {
+                <button type="button" onClick={() => apply(m('label.replaceWithDetection', { symbol: reanalysis.segment.label }), (p) => P.updateChord(p, selEvent.id, {
                   kind: 'chord', chord: reanalysis.segment.detection.candidates[0].chord, source: 'midi_detected',
                   sourceSignature: reanalysis.signature, sourceNoteIds: reanalysis.noteIds,
-                }))}>用新识别替换</button>
+                }))}>{t('chord.replaceWithDetection')}</button>
               )}
-              <button type="button" onClick={() => apply('保留已确认和弦', (p) => P.updateChord(p, selEvent.id, { sourceSignature: reanalysis?.signature ?? null }))}>
-                保留原和弦（标记已查看）</button>
+              <button type="button" onClick={() => apply(m('label.keepChord'), (p) => P.updateChord(p, selEvent.id, { sourceSignature: reanalysis?.signature ?? null }))}>
+                {t('chord.keepChord')}</button>
             </div>
           </div>
         )}
@@ -227,62 +238,75 @@ export default function ChordPanel({ project, harmony, chordSelection, setChordS
         onCancel={() => setChordSelection(null)}
         onWrite={(event) => {
           if (selEvent) {
-            apply(`修改和弦为 ${eventSymbol(event)}`, (p) => P.updateChord(p, selEvent.id, { ...event, source: 'manual', status: 'confirmed' }))
+            apply(m('label.changeChord', { symbol: eventSymbol(event) }), (p) => P.updateChord(p, selEvent.id, { ...event, source: 'manual', status: 'confirmed' }))
           } else {
-            writeChord({ ...event, source: 'manual' }, `手选和弦 ${eventSymbol(event)}`)
+            writeChord({ ...event, source: 'manual' }, m('label.manualChord', { symbol: eventSymbol(event) }))
             setChordSelection(null)
           }
         }}
-        onDelete={selEvent ? () => { apply(`删除和弦 ${eventSymbol(selEvent)}`, (p) => P.deleteChord(p, selEvent.id)); setChordSelection(null) } : null}
+        onDelete={selEvent ? () => { apply(m('label.deleteChordSymbol', { symbol: eventSymbol(selEvent) }), (p) => P.deleteChord(p, selEvent.id)); setChordSelection(null) } : null}
         onCopy={selEvent ? () => {
           const at = selEvent.startTick + selEvent.durationTick
           const conflicts = P.chordConflicts(project.chordTrack, at, at + selEvent.durationTick)
-          apply(`复制和弦 ${eventSymbol(selEvent)}`, (p) => P.copyChord(p, selEvent.id, at))
-          if (conflicts.length) say(`复制时替换了：${conflicts.map((c) => eventSymbol(c.event)).join('、')}（可撤销）`)
+          apply(m('label.copyChord', { symbol: eventSymbol(selEvent) }), (p) => P.copyChord(p, selEvent.id, at))
+          if (conflicts.length) say(m('notice.copyReplaced', { list: list(conflicts.map((c) => eventSymbol(c.event))) }))
         } : null}
       />
     )
   } else {
     body = (
       <div className="muted">
-        <p>点和弦行里的虚线建议可采用；点已确认和弦可修改；在和弦行空白处拖动选择范围后手选根音＋类型。</p>
+        <p>{t('chord.help')}</p>
         <div className="row actions">
-          <button type="button" onClick={adoptAllSuggestions} disabled={!suggestionCount}>采用全部建议（{suggestionCount}）</button>
-          <button type="button" onClick={() => setChordSelection({ type: 'range', ...defaultRange() })}>手选和弦（当前小节）</button>
+          <button type="button" onClick={adoptAllSuggestions} disabled={!suggestionCount}>{t('chord.adoptAll', { n: suggestionCount })}</button>
+          <button type="button" onClick={() => setChordSelection({ type: 'range', ...defaultRange() })}>{t('chord.manualThisBar')}</button>
         </div>
       </div>
     )
   }
 
   return (
-    <aside className="chord-panel" aria-label="和弦与调性">
+    <aside className="chord-panel" aria-label={t('chordPanel.label')}>
       <KeySection project={project} analysis={analysis} apply={apply}
-        hasEvidence={project.tracks.some((t) => !t.isDrum && P.mainClip(t).notes.length) || project.chordTrack.some((e) => e.chord)} />
-      <section className="panel-section" aria-label="和弦">
-        <h3>和弦 {analysisTrack ? <span className="muted">· 识别自「{analysisTrack.name}」</span> : <span className="muted">· 选中鼓轨时不识别</span>}</h3>
+        hasEvidence={project.tracks.some((tr) => !tr.isDrum && P.mainClip(tr).notes.length) || project.chordTrack.some((e) => e.chord)} />
+      <section className="panel-section" aria-label={t('chord.title')}>
+        <h3>{t('chord.title')} {analysisTrack
+          ? <span className="muted">{t('chord.detectedFrom', { name: analysisTrack.name })}</span>
+          : <span className="muted">{t('chord.drumSelected')}</span>}</h3>
         {body}
+        <div className="row">
+          <button type="button" onClick={() => chordsToTrack(range)} title={t('chord.toMidiTitle')} data-testid="chords-to-midi">
+            {range ? t('chord.toMidiRange', { start: posText(range.startTick, ts), end: posText(range.endTick, ts) }) : t('chord.toMidiAll')}
+          </button>
+        </div>
       </section>
-      <section className="panel-section" aria-label="进行分析">
-        <h3>级数与进行 <span className="muted">· 分析 v{analysis.analysisVersion} · 输入 r{analysis.inputRevision}</span></h3>
-        {!analysis.key && <p className="muted">调性证据不足时不给级数；可在上方手选调性。</p>}
+      <section className="panel-section" aria-label={t('progression.title')}>
+        <h3>{t('progression.title')} <span className="muted">{t('progression.version', { version: analysis.analysisVersion, revision: analysis.inputRevision })}</span></h3>
+        {!analysis.key && <p className="muted">{t('progression.noKey')}</p>}
         <ul className="progressions" data-testid="progressions">
+          {analysis.runs.map((r, i) => (
+            <li key={`r${i}`} data-testid="progression-run"><strong>{r.text}</strong> <span className="tag">{t('progression.whole')}</span>
+              <div className="muted">{posText(r.startTick, ts)}–{posText(r.endTick, ts)} · {r.numbers}
+                {analysis.key?.tentative ? t('progression.inKeyInferred', { key: keyLabel(analysis.key) }) : t('progression.inKey', { key: keyLabel(analysis.key) })}</div></li>
+          ))}
           {analysis.progressions.map((p, i) => (
-            <li key={i}><strong>{p.text}</strong> <span className="tag">{p.name}</span>
-              <div className="muted">{posText(p.startTick, ts)}–{posText(p.endTick, ts)} · {p.detail}</div></li>
+            <li key={i}><strong>{p.text}</strong> <span className="tag">{t(p.name)}</span>
+              <div className="muted">{posText(p.startTick, ts)}–{posText(p.endTick, ts)} · {t(p.detail)}</div></li>
           ))}
           {analysis.modulationHints.map((h, i) => (
-            <li key={`m${i}`} className="warn">{h.label} · {posText(h.startTick, ts)}–{posText(h.endTick, ts)}</li>
+            <li key={`m${i}`} className="warn">{t(h.label)} · {posText(h.startTick, ts)}–{posText(h.endTick, ts)}</li>
           ))}
         </ul>
+        {analysis.runs.length > 0 && !analysis.progressions.length && <p className="muted" data-testid="no-named-progression">{t('progression.noNamed')}</p>}
         {staleChords.size > 0 && (
-          <p className="warn">{staleChords.size} 个已确认和弦的来源音符已变化：
+          <p className="warn">{t('progression.staleCount', { n: staleChords.size })}
             {[...staleChords.keys()].map((id) => {
               const e = project.chordTrack.find((c) => c.id === id)
-              return <button key={id} type="button" onClick={() => setChordSelection({ type: 'event', id })}>{eventSymbol(e)} 重新分析</button>
+              return <button key={id} type="button" onClick={() => setChordSelection({ type: 'event', id })}>{t('progression.reanalyse', { symbol: eventSymbol(e) })}</button>
             })}
           </p>
         )}
-        {analysisTrack && !analysisNotes.length && <p className="muted">「{analysisTrack.name}」还没有音符。</p>}
+        {analysisTrack && !analysisNotes.length && <p className="muted">{t('progression.noNotes', { name: analysisTrack.name })}</p>}
       </section>
     </aside>
   )

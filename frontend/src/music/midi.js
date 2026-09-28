@@ -2,6 +2,7 @@
 // not written as notes; they stay lossless in the project JSON.
 
 import { parseMidi, writeMidi } from 'midi-file'
+import { m, translate } from '../i18n/translate.js'
 import { createProject, createTrack, trackNotes } from './project.js'
 import { isValidTimeSignature, PPQ, ticksPerBar } from './time.js'
 
@@ -27,10 +28,10 @@ export function planExport(project) {
   const drums = project.tracks.filter((t) => t.isDrum)
   const errors = [], warnings = []
   if (melodic.length > MELODIC_CHANNELS.length) {
-    errors.push(`有 ${melodic.length} 条音高轨，单端口 MIDI 只有 ${MELODIC_CHANNELS.length} 个非鼓通道可一轨一通道。请删除或合并轨道后再导出；不会自动合轨。`)
+    errors.push(m('midi.err.tooManyTracks', { n: melodic.length, max: MELODIC_CHANNELS.length }))
   }
   if (drums.length > 1) {
-    warnings.push(`${drums.length} 条鼓轨将共用第 10 通道：MIDI 轨道仍分开保存，但该通道的音量等控制会共享。`)
+    warnings.push(m('midi.warn.drumsShare', { n: drums.length }))
   }
   const channels = new Map()
   melodic.forEach((t, i) => channels.set(t.id, MELODIC_CHANNELS[i]))
@@ -50,7 +51,7 @@ function toDeltas(events) {
 const ORDER = { trackName: 0, setTempo: 1, timeSignature: 2, programChange: 3, controller: 4, noteOff: 5, noteOn: 6 }
 
 export function exportMidi(project, plan = planExport(project)) {
-  if (!plan.ok) throw new Error(plan.errors.join('\n'))
+  if (!plan.ok) throw new Error(plan.errors.map((e) => translate('en', e)).join('\n'))
   const { numerator, denominator } = project.timeSignature
   const conductor = [
     { tick: 0, type: 'trackName', text: encodeText(project.name) },
@@ -85,19 +86,20 @@ const IGNORED_META = new Set(['text', 'copyrightNotice', 'instrumentName', 'lyri
 
 /**
  * Parse a SMF into a new project. Returns { ok, project, limitations, notices, stats } or
- * { ok: false, errors }. `limitations` lists information that would be lost (tempo/meter
- * changes, CC, pitch bend, …): the caller must let the user cancel before importing.
+ * { ok: false, errors }; messages are descriptors. `limitations` lists information that would
+ * be lost (tempo/meter changes, CC, pitch bend, …): the caller must let the user cancel before
+ * importing. Default track names are written in `lang`.
  */
-export function importMidi(bytes, { name = '导入的 MIDI' } = {}) {
+export function importMidi(bytes, { name, lang = 'zh' } = {}) {
   let parsed
   try {
     parsed = parseMidi(bytes)
   } catch (e) {
-    return { ok: false, errors: [`无法解析 MIDI 文件：${e?.message ?? e}`] }
+    return { ok: false, errors: [m('midi.err.parse', { msg: String(e?.message ?? e) })] }
   }
   const { header } = parsed
-  if (header.framesPerSecond) return { ok: false, errors: ['使用 SMPTE 时间码的 MIDI 暂不支持'] }
-  if (header.format === 2) return { ok: false, errors: ['格式 2（多个独立序列）的 MIDI 暂不支持'] }
+  if (header.framesPerSecond) return { ok: false, errors: [m('midi.err.smpte')] }
+  if (header.format === 2) return { ok: false, errors: [m('midi.err.format2')] }
   const tpb = header.ticksPerBeat
   let rounded = 0
   const conv = (t) => {
@@ -107,7 +109,10 @@ export function importMidi(bytes, { name = '导入的 MIDI' } = {}) {
     return r
   }
   const tempos = [], sigs = [], lost = new Map(), notices = []
-  const count = (label) => lost.set(label, (lost.get(label) ?? 0) + 1)
+  const count = (key, params) => {
+    const id = JSON.stringify([key, params])
+    lost.set(id, (lost.get(id) ?? 0) + 1)
+  }
   const parts = new Map()
   let unmatched = 0, unclosed = 0
 
@@ -141,14 +146,14 @@ export function importMidi(bytes, { name = '导入的 MIDI' } = {}) {
         case 'programChange': partOf(ev.channel).programs.push({ tick, value: ev.programNumber }); break
         case 'controller':
           if (ev.controllerType === 7) partOf(ev.channel).volumes.push({ tick, value: ev.value })
-          else if (ev.controllerType === 64) count('延音踏板 CC64')
-          else if (ev.controllerType === 0 || ev.controllerType === 32) count('音色库选择 CC0/CC32')
-          else count(`控制器 CC${ev.controllerType}`)
+          else if (ev.controllerType === 64) count('midi.what.cc64')
+          else if (ev.controllerType === 0 || ev.controllerType === 32) count('midi.what.bank')
+          else count('midi.what.cc', { n: ev.controllerType })
           break
-        case 'pitchBend': count('弯音'); break
-        case 'channelAftertouch': case 'noteAftertouch': count('触后'); break
-        case 'sysEx': case 'endSysEx': count('系统专用消息 SysEx'); break
-        default: if (!IGNORED_META.has(ev.type)) count(`事件 ${ev.type}`)
+        case 'pitchBend': count('midi.what.pitchBend'); break
+        case 'channelAftertouch': case 'noteAftertouch': count('midi.what.aftertouch'); break
+        case 'sysEx': case 'endSysEx': count('midi.what.sysex'); break
+        default: if (!IGNORED_META.has(ev.type)) count('midi.what.event', { type: ev.type })
       }
     }
     for (const part of parts.values()) {
@@ -164,7 +169,10 @@ export function importMidi(bytes, { name = '导入的 MIDI' } = {}) {
     }
   })
 
-  const limitations = [...lost].map(([label, n]) => `${label} ×${n}（不导入）`)
+  const limitations = [...lost].map(([id, n]) => {
+    const [key, params] = JSON.parse(id)
+    return m('midi.lost', { what: m(key, params ?? undefined), n })
+  })
   const earliest = (notes) => notes.reduce((m, n) => Math.min(m, n.start), Infinity)
   const firstNote = [...parts.values()].reduce((m, p) => Math.min(m, earliest(p.notes)), Infinity)
   const distinct = (list, dflt) => {
@@ -174,24 +182,24 @@ export function importMidi(bytes, { name = '导入的 MIDI' } = {}) {
   }
   const tempoValues = distinct(tempos, 500000)
   let quarterBpm = 60e6 / (tempos[0]?.value ?? 500000)
-  if (!tempos.length) notices.push('文件没有速度信息，按 MIDI 默认 120 BPM 导入')
-  if (tempoValues.length > 1) limitations.push(`速度变化 ${tempoValues.length - 1} 处：本阶段只支持固定速度，使用首个速度 ${quarterBpm.toFixed(2)} BPM；音符 tick 不变，但播放时间会与原文件不同`)
+  if (!tempos.length) notices.push(m('midi.notice.noTempo'))
+  if (tempoValues.length > 1) limitations.push(m('midi.limit.tempoChanges', { n: tempoValues.length - 1, bpm: quarterBpm.toFixed(2) }))
   if (quarterBpm < 20 || quarterBpm > 300) {
-    limitations.push(`速度 ${quarterBpm.toFixed(2)} BPM 超出 20–300 范围，改为 ${quarterBpm < 20 ? 20 : 300}`)
+    limitations.push(m('midi.limit.tempoRange', { bpm: quarterBpm.toFixed(2), clamped: quarterBpm < 20 ? 20 : 300 }))
     quarterBpm = quarterBpm < 20 ? 20 : 300
   }
   const sigValues = distinct(sigs, '4/4')
   let timeSignature = sigs[0]?.ts ?? { numerator: 4, denominator: 4 }
-  if (sigValues.length > 1) limitations.push(`拍号变化 ${sigValues.length - 1} 处：使用首个拍号 ${timeSignature.numerator}/${timeSignature.denominator}`)
+  if (sigValues.length > 1) limitations.push(m('midi.limit.meterChanges', { n: sigValues.length - 1, ts: `${timeSignature.numerator}/${timeSignature.denominator}` }))
   if (!isValidTimeSignature(timeSignature)) {
-    limitations.push(`拍号 ${timeSignature.numerator}/${timeSignature.denominator} 不在支持范围，改为 4/4`)
+    limitations.push(m('midi.limit.meterRange', { ts: `${timeSignature.numerator}/${timeSignature.denominator}` }))
     timeSignature = { numerator: 4, denominator: 4 }
   }
-  if (unclosed) limitations.push(`${unclosed} 个音符没有结束事件，已在所在轨道末尾结束`)
-  if (unmatched) notices.push(`${unmatched} 个多余的音符结束事件已忽略`)
+  if (unclosed) limitations.push(m('midi.limit.unclosed', { n: unclosed }))
+  if (unmatched) notices.push(m('midi.notice.unmatched', { n: unmatched }))
 
-  const project = createProject()
-  project.name = name
+  const project = createProject(lang)
+  project.name = name ?? translate(lang, 'midi.defaultName')
   project.quarterBpm = quarterBpm
   project.timeSignature = { ...timeSignature }
   project.loopRange = { startTick: 0, endTick: ticksPerBar(timeSignature) * 4, enabled: false }
@@ -201,7 +209,7 @@ export function importMidi(bytes, { name = '导入的 MIDI' } = {}) {
   for (const p of withNotes) channelsPerTrack.set(p.ti, (channelsPerTrack.get(p.ti) ?? 0) + 1)
   if (withNotes.length) {
     project.tracks = withNotes.map((p, i) => {
-      const base = p.trackName || `轨道 ${i + 1}`
+      const base = p.trackName || translate(lang, 'project.trackN', { n: i + 1 })
       const isDrum = p.channel === DRUM_CHANNEL
       const first = earliest(p.notes)
       const settle = (list, label, dflt) => {
@@ -209,15 +217,19 @@ export function importMidi(bytes, { name = '导入的 MIDI' } = {}) {
         const value = (before.length ? before[before.length - 1] : list[0])?.value ?? dflt
         const later = new Set(list.filter((e) => e.tick > first).map((e) => e.value))
         later.delete(value)
-        if (later.size) limitations.push(`「${base}」${label}中途变化 ${list.filter((e) => e.tick > first).length} 次：使用 ${label === '音色' ? `Program ${value + 1}` : value}`)
+        if (later.size) {
+          limitations.push(m('midi.limit.midTrackChange', {
+            track: base, what: m(label), n: list.filter((e) => e.tick > first).length, value: label === 'midi.what.program' ? `Program ${value + 1}` : value,
+          }))
+        }
         return value
       }
       const track = createTrack({
-        name: channelsPerTrack.get(p.ti) > 1 ? `${base} · 通道 ${p.channel + 1}` : base,
-        program: isDrum ? 0 : settle(p.programs, '音色', 0), isDrum, role: isDrum ? 'drums' : 'melody',
+        name: channelsPerTrack.get(p.ti) > 1 ? translate(lang, 'midi.trackChannel', { base, ch: p.channel + 1 }) : base,
+        program: isDrum ? 0 : settle(p.programs, 'midi.what.program', 0), isDrum, role: isDrum ? 'drums' : 'melody',
       })
-      if (isDrum && p.programs.some((e) => e.value !== 0)) limitations.push(`「${base}」鼓组 Program 变更：本阶段使用标准鼓组`)
-      track.volume = settle(p.volumes, '音量 CC7', 100)
+      if (isDrum && p.programs.some((e) => e.value !== 0)) limitations.push(m('midi.limit.drumProgram', { track: base }))
+      track.volume = settle(p.volumes, 'midi.what.volume', 100)
       const notes = p.notes.map((n) => {
         const startTick = conv(n.start)
         return { pitch: n.pitch, velocity: Math.max(1, n.velocity), startTick, durationTick: Math.max(1, conv(n.end) - startTick) }
@@ -228,7 +240,7 @@ export function importMidi(bytes, { name = '导入的 MIDI' } = {}) {
       return track
     })
   }
-  if (rounded) limitations.push(`原文件 PPQ ${tpb}：${rounded} 个事件时间换算到 ${PPQ} PPQ 时取整（每个偏差不超过半个 tick）`)
+  if (rounded) limitations.push(m('midi.limit.ppqRounded', { ppq: tpb, n: rounded, target: PPQ }))
   const noteCount = project.tracks.reduce((s, t) => s + t.clips[0].notes.length, 0)
   return { ok: true, project, limitations, notices, stats: { tracks: project.tracks.length, notes: noteCount, sourcePpq: tpb, format: header.format } }
 }

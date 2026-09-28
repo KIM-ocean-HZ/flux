@@ -1,6 +1,7 @@
 // One chord dictionary shared by detection, manual selection, symbols and preview voicings.
 // Stored spellings are ASCII ("Db", "F#"); display turns them into ♭/♯.
 
+import { m } from '../i18n/translate.js'
 import { PPQ } from './time.js'
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
@@ -44,21 +45,21 @@ export function spellInterval(rootSpelling, semitones, degree) {
 
 // [semitones above root, scale degree]. `omit5` marks types still recognised without the fifth.
 export const CHORD_TYPES = [
-  { id: 'maj', label: '大三', quality: 'maj', additions: [], suffix: '', tones: [[0, 1], [4, 3], [7, 5]] },
-  { id: 'min', label: '小三', quality: 'min', additions: [], suffix: 'm', tones: [[0, 1], [3, 3], [7, 5]] },
-  { id: 'dim', label: '减三', quality: 'dim', additions: [], suffix: 'dim', tones: [[0, 1], [3, 3], [6, 5]] },
-  { id: 'aug', label: '增三', quality: 'aug', additions: [], suffix: 'aug', tones: [[0, 1], [4, 3], [8, 5]] },
-  { id: '7', label: '属七', quality: '7', additions: [], suffix: '7', tones: [[0, 1], [4, 3], [7, 5], [10, 7]], omit5: true },
-  { id: 'maj7', label: '大七', quality: 'maj7', additions: [], suffix: 'maj7', tones: [[0, 1], [4, 3], [7, 5], [11, 7]], omit5: true },
-  { id: 'm7', label: '小七', quality: 'm7', additions: [], suffix: 'm7', tones: [[0, 1], [3, 3], [7, 5], [10, 7]], omit5: true },
-  { id: 'sus2', label: '挂二', quality: 'sus2', additions: [], suffix: 'sus2', tones: [[0, 1], [2, 2], [7, 5]] },
-  { id: 'sus4', label: '挂四', quality: 'sus4', additions: [], suffix: 'sus4', tones: [[0, 1], [5, 4], [7, 5]] },
-  { id: 'add9', label: '加九', quality: 'maj', additions: ['add9'], suffix: 'add9', tones: [[0, 1], [4, 3], [7, 5], [2, 9]], omit5: true },
-  { id: 'madd9', label: '小加九', quality: 'min', additions: ['add9'], suffix: 'madd9', tones: [[0, 1], [3, 3], [7, 5], [2, 9]], omit5: true },
-  { id: 'add11', label: '加十一', quality: 'maj', additions: ['add11'], suffix: 'add11', tones: [[0, 1], [4, 3], [7, 5], [5, 11]] },
-  { id: '6', label: '大六', quality: '6', additions: [], suffix: '6', tones: [[0, 1], [4, 3], [7, 5], [9, 6]] },
-  { id: 'm6', label: '小六', quality: 'm6', additions: [], suffix: 'm6', tones: [[0, 1], [3, 3], [7, 5], [9, 6]] },
-  { id: '9', label: '属九', quality: '9', additions: [], suffix: '9', tones: [[0, 1], [4, 3], [7, 5], [10, 7], [2, 9]], omit5: true },
+  { id: 'maj', quality: 'maj', additions: [], suffix: '', tones: [[0, 1], [4, 3], [7, 5]] },
+  { id: 'min', quality: 'min', additions: [], suffix: 'm', tones: [[0, 1], [3, 3], [7, 5]] },
+  { id: 'dim', quality: 'dim', additions: [], suffix: 'dim', tones: [[0, 1], [3, 3], [6, 5]] },
+  { id: 'aug', quality: 'aug', additions: [], suffix: 'aug', tones: [[0, 1], [4, 3], [8, 5]] },
+  { id: '7', quality: '7', additions: [], suffix: '7', tones: [[0, 1], [4, 3], [7, 5], [10, 7]], omit5: true },
+  { id: 'maj7', quality: 'maj7', additions: [], suffix: 'maj7', tones: [[0, 1], [4, 3], [7, 5], [11, 7]], omit5: true },
+  { id: 'm7', quality: 'm7', additions: [], suffix: 'm7', tones: [[0, 1], [3, 3], [7, 5], [10, 7]], omit5: true },
+  { id: 'sus2', quality: 'sus2', additions: [], suffix: 'sus2', tones: [[0, 1], [2, 2], [7, 5]] },
+  { id: 'sus4', quality: 'sus4', additions: [], suffix: 'sus4', tones: [[0, 1], [5, 4], [7, 5]] },
+  { id: 'add9', quality: 'maj', additions: ['add9'], suffix: 'add9', tones: [[0, 1], [4, 3], [7, 5], [2, 9]], omit5: true },
+  { id: 'madd9', quality: 'min', additions: ['add9'], suffix: 'madd9', tones: [[0, 1], [3, 3], [7, 5], [2, 9]], omit5: true },
+  { id: 'add11', quality: 'maj', additions: ['add11'], suffix: 'add11', tones: [[0, 1], [4, 3], [7, 5], [5, 11]] },
+  { id: '6', quality: '6', additions: [], suffix: '6', tones: [[0, 1], [4, 3], [7, 5], [9, 6]] },
+  { id: 'm6', quality: 'm6', additions: [], suffix: 'm6', tones: [[0, 1], [3, 3], [7, 5], [9, 6]] },
+  { id: '9', quality: '9', additions: [], suffix: '9', tones: [[0, 1], [4, 3], [7, 5], [10, 7], [2, 9]], omit5: true },
 ]
 
 export const MINOR_THIRD_QUALITIES = new Set(['min', 'dim', 'm7', 'm6'])
@@ -95,20 +96,20 @@ export function chordSymbol(chord) {
 
 export const eventSymbol = (event) => (event.kind === 'no_chord' ? 'N.C.' : chordSymbol(event.chord))
 
-/** Returns an error message, or null when the structured chord is valid. */
+/** Returns an error message descriptor, or null when the structured chord is valid. */
 export function validateChord(chord) {
-  if (!chord || typeof chord !== 'object') return '缺少 chord 字段'
-  if (!Number.isInteger(chord.rootPc) || chord.rootPc < 0 || chord.rootPc > 11) return '根音 rootPc 须为 0–11'
+  if (!chord || typeof chord !== 'object') return m('chord.err.missing')
+  if (!Number.isInteger(chord.rootPc) || chord.rootPc < 0 || chord.rootPc > 11) return m('chord.err.rootPc')
   if (!ROOT_SPELLINGS.includes(chord.rootSpelling) || spellingPc(chord.rootSpelling) !== chord.rootPc) {
-    return `根音拼写 ${chord.rootSpelling} 与 rootPc ${chord.rootPc} 不一致`
+    return m('chord.err.rootSpelling', { spelling: chord.rootSpelling, pc: chord.rootPc })
   }
-  if (!Array.isArray(chord.additions)) return 'additions 须为数组'
-  if (!chordType(chord)) return `不支持的和弦类型 ${chord.quality}+${chord.additions.join(',')}`
+  if (!Array.isArray(chord.additions)) return m('chord.err.additions')
+  if (!chordType(chord)) return m('chord.err.type', { type: `${chord.quality}+${chord.additions.join(',')}` })
   if (chord.bassPc != null) {
-    if (!Number.isInteger(chord.bassPc) || chord.bassPc < 0 || chord.bassPc > 11) return '低音 bassPc 须为 0–11'
-    if (spellingPc(chord.bassSpelling) !== chord.bassPc) return `低音拼写 ${chord.bassSpelling} 与 bassPc 不一致`
-    if (chord.bassPc === chord.rootPc) return '低音与根音相同时应省略 bassPc'
-  } else if (chord.bassSpelling != null) return '缺少 bassPc 时不能有 bassSpelling'
+    if (!Number.isInteger(chord.bassPc) || chord.bassPc < 0 || chord.bassPc > 11) return m('chord.err.bassPc')
+    if (spellingPc(chord.bassSpelling) !== chord.bassPc) return m('chord.err.bassSpelling', { spelling: chord.bassSpelling })
+    if (chord.bassPc === chord.rootPc) return m('chord.err.bassSame')
+  } else if (chord.bassSpelling != null) return m('chord.err.bassOrphan')
   return null
 }
 
@@ -127,9 +128,6 @@ export function voiceChord(chord) {
   return [bass, ...upper]
 }
 
-const INTERVAL_NAMES = ['纯八度', '小二度', '大二度', '小三度', '大三度', '纯四度', '三全音',
-  '纯五度', '小六度', '大六度', '小七度', '大七度']
-
 /**
  * Identify a simultaneous pitch set. Octave duplicates are merged for matching; the lowest
  * sounding pitch decides the inversion. Scores only order candidates and are not probabilities.
@@ -143,8 +141,11 @@ export function detectChord(pitches, { key = null } = {}) {
   const accidentals = key ? keyAccidentals(key) : undefined
   if (pcs.length < 3) {
     const reason = pcs.length === 1
-      ? `单音 ${uniq.map((p) => pitchName(p, accidentals)).join(' ')}`
-      : `双音程 ${pitchName(uniq[0], accidentals)}–${pitchName(uniq.find((p) => mod12(p) !== bassPc), accidentals)}（${INTERVAL_NAMES[mod12(pcs[1] - pcs[0])]}）`
+      ? m('detect.single', { notes: uniq.map((p) => pitchName(p, accidentals)).join(' ') })
+      : m('detect.dyad', {
+        low: pitchName(uniq[0], accidentals), high: pitchName(uniq.find((p) => mod12(p) !== bassPc), accidentals),
+        interval: m(`interval.${mod12(pcs[1] - pcs[0])}`),
+      })
     return { status: 'undetermined', reason, candidates: [], pitches: uniq }
   }
   const set = new Set(pcs)
@@ -167,7 +168,7 @@ export function detectChord(pitches, { key = null } = {}) {
     }
   }
   if (!candidates.length) {
-    return { status: 'unsupported', reason: `音集 ${pcs.map((pc) => displaySpelling(defaultSpelling(pc, accidentals))).join(' ')} 不在首版和弦字典中`, candidates, pitches: uniq }
+    return { status: 'unsupported', reason: m('detect.unsupported', { pcs: pcs.map((pc) => displaySpelling(defaultSpelling(pc, accidentals))).join(' ') }), candidates, pitches: uniq }
   }
   // Ambiguity is a property of the notes; key context only reorders the interpretations.
   const base = candidates.map((c) => c.score).sort((a, b) => b - a)

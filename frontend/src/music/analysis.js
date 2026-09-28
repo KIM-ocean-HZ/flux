@@ -5,6 +5,7 @@
 import {
   chordPcs, chordType, displaySpelling, isDiatonicChord, MINOR_THIRD_QUALITIES, scalePcs,
 } from './chords.js'
+import { m } from '../i18n/translate.js'
 import { accentAt, PPQ } from './time.js'
 
 export const ANALYSIS_VERSION = 'phase-a-1'
@@ -18,7 +19,7 @@ export const ALL_KEYS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].flatMap((pc) => [
   { tonicPc: pc, tonicSpelling: MINOR_TONIC[pc], mode: 'minor' },
 ])
 
-export const keyLabel = (key) => `${displaySpelling(key.tonicSpelling)} ${key.mode === 'major' ? '大调' : '小调'}`
+export const keyLabel = (key) => m(key.mode === 'major' ? 'key.major' : 'key.minor', { tonic: displaySpelling(key.tonicSpelling) })
 export const sameKey = (a, b) => !!a && !!b && a.tonicPc === b.tonicPc && a.mode === b.mode
 
 // Krumhansl–Kessler key profiles.
@@ -56,11 +57,18 @@ function pitchProfile(notes, timeSignature) {
 const isDiatonic = isDiatonicChord
 const parallel = (key) => ({ ...key, mode: key.mode === 'major' ? 'minor' : 'major' })
 
+const sameChord = (a, b) => a.rootPc === b.rootPc && a.quality === b.quality && a.bassPc === b.bassPc
+  && (a.additions ?? []).join() === (b.additions ?? []).join()
+
 /** Is chord i a dominant-type chord resolving down a fifth to a diatonic, non-tonic target? */
 function secondaryTarget(chords, i, key) {
   const c = chords[i].chord
-  const next = chords[i + 1]
-  if (!isDominantType(c) || !next?.chord || next.startTick - (chords[i].startTick + chords[i].durationTick) > PPQ) return null
+  let j = i
+  // A repeated chord is one harmony: look past repeats that follow without a gap.
+  while (chords[j + 1]?.chord && sameChord(chords[j + 1].chord, c)
+    && chords[j + 1].startTick - (chords[j].startTick + chords[j].durationTick) <= PPQ) j++
+  const next = chords[j + 1]
+  if (!isDominantType(c) || !next?.chord || next.startTick - (chords[j].startTick + chords[j].durationTick) > PPQ) return null
   if (next.chord.rootPc !== mod12(c.rootPc + 5) || next.chord.rootPc === key.tonicPc) return null
   return isDiatonic(next.chord, key) ? next : null
 }
@@ -127,7 +135,7 @@ const QUALITY_TEXT = { maj: '', min: '', dim: '°', aug: '+', 7: '7', maj7: 'maj
   sus4: 'sus4', 6: ' add6', m6: ' add6', 9: '9' }
 const TRIAD_FIGURES = { 3: '⁶', 5: '⁶₄' }
 const SEVENTH_FIGURES = { 3: '⁶₅', 5: '⁴₃', 7: '⁴₂' }
-const BASS_DEGREE_TEXT = { 3: '三音低音', 5: '五音低音', 7: '七音低音' }
+const BASS_DEGREE_TEXT = { 3: m('roman.bass3'), 5: m('roman.bass5'), 7: m('roman.bass7') }
 
 /** Roman numeral of a chord in a key; keeps quality, additions and inversion visible. */
 export function romanNumeral(chord, key) {
@@ -143,7 +151,7 @@ export function romanNumeral(chord, key) {
     const figures = ['7', 'maj7', 'm7'].includes(chord.quality) ? SEVENTH_FIGURES
       : ['maj', 'min', 'dim', 'aug'].includes(chord.quality) ? TRIAD_FIGURES : {}
     figure = figures[degree] ?? ''
-    bassText = BASS_DEGREE_TEXT[degree] ?? `低音 ${displaySpelling(chord.bassSpelling)}`
+    bassText = BASS_DEGREE_TEXT[degree] ?? m('roman.bassOther', { bass: displaySpelling(chord.bassSpelling) })
     if (!figure) figure = `/${displaySpelling(chord.bassSpelling)}`
   }
   let qualityText = QUALITY_TEXT[chord.quality]
@@ -162,30 +170,31 @@ export function romanNumeral(chord, key) {
 
 const PATTERNS = {
   major: [
-    { seq: ['I', 'V', 'vi', 'IV'], name: '流行常用进行' },
-    { seq: ['vi', 'IV', 'I', 'V'], name: '流行常用进行（从 vi 开始）' },
-    { seq: ['I', 'vi', 'IV', 'V'], name: '五〇年代进行' },
-    { seq: ['IV', 'iv', 'I'], name: '借用小下属' },
-    { seq: ['ii', 'V', 'I'], name: 'ii–V–I' },
-    { seq: ['IV', 'V', 'I'], name: '正格终止' },
-    { seq: ['V', 'I'], name: '正格终止' },
-    { seq: ['IV', 'I'], name: '变格终止' },
-    { seq: ['V', 'vi'], name: '阻碍终止' },
+    { seq: ['I', 'V', 'vi', 'IV'], name: 'prog.pop' },
+    { seq: ['vi', 'IV', 'I', 'V'], name: 'prog.popFromVi' },
+    { seq: ['I', 'vi', 'IV', 'V'], name: 'prog.fifties' },
+    { seq: ['IV', 'iv', 'I'], name: 'prog.borrowedIv' },
+    { seq: ['ii', 'V', 'I'], name: 'prog.iiVI' },
+    { seq: ['IV', 'V', 'I'], name: 'prog.authentic' },
+    { seq: ['V', 'I'], name: 'prog.authentic' },
+    { seq: ['IV', 'I'], name: 'prog.plagal' },
+    { seq: ['V', 'vi'], name: 'prog.deceptive' },
   ],
   minor: [
-    { seq: ['i', 'VI', 'III', 'VII'], name: '小调流行进行' },
-    { seq: ['ii', 'V', 'i'], name: '小调 ii–V–i' },
-    { seq: ['iv', 'V', 'i'], name: '小调终止' },
-    { seq: ['V', 'i'], name: '正格终止' },
-    { seq: ['iv', 'i'], name: '变格终止' },
-    { seq: ['V', 'VI'], name: '阻碍终止' },
+    { seq: ['i', 'VI', 'III', 'VII'], name: 'prog.minorPop' },
+    { seq: ['ii', 'V', 'i'], name: 'prog.minorIiVi' },
+    { seq: ['iv', 'V', 'i'], name: 'prog.minorCadence' },
+    { seq: ['V', 'i'], name: 'prog.authentic' },
+    { seq: ['iv', 'i'], name: 'prog.plagal' },
+    { seq: ['V', 'VI'], name: 'prog.deceptive' },
   ],
 }
 
 /**
  * Full derived analysis. `chords` are chord-track events (confirmed and tentative suggestions)
  * sorted by start; N.C. events break progressions. With no confirmed key the top inferred key
- * is used tentatively unless the evidence is insufficient.
+ * is used tentatively unless the evidence is insufficient. Every run of chords gets its full
+ * numeral sequence (`runs`), whether or not it matches a named progression.
  */
 export function analyzeHarmony({ chords, notes, timeSignature, keyContext, revision }) {
   const candidates = keyCandidates(chords, notes, timeSignature)
@@ -197,7 +206,7 @@ export function analyzeHarmony({ chords, notes, timeSignature, keyContext, revis
   }
   const result = {
     analysisVersion: ANALYSIS_VERSION, inputRevision: revision, key, keyStatus: candidates.status,
-    keyCandidates: candidates.candidates.slice(0, 4), chords: {}, progressions: [], modulationHints: [],
+    keyCandidates: candidates.candidates.slice(0, 4), chords: {}, runs: [], progressions: [], modulationHints: [],
   }
   if (!key) return result
 
@@ -214,36 +223,51 @@ export function analyzeHarmony({ chords, notes, timeSignature, keyContext, revis
   if (run.length) runs.push(run)
 
   for (const r of runs) {
-    const romans = r.map((e) => romanNumeral(e.chord, key))
-    r.forEach((e, i) => {
+    // Repeats of the same chord are one harmony for labels and progression patterns.
+    const groups = []
+    for (const e of r) {
+      const last = groups[groups.length - 1]
+      if (last && sameChord(last.chord, e.chord)) {
+        last.events.push(e)
+        last.durationTick = e.startTick + e.durationTick - last.startTick
+      } else groups.push({ chord: e.chord, startTick: e.startTick, durationTick: e.durationTick, events: [e] })
+    }
+    const romans = groups.map((g) => romanNumeral(g.chord, key))
+    groups.forEach((g, i) => {
       const roman = romans[i]
-      const entry = { roman, display: roman.text, alternatives: [], labels: [], tentative: !!e.tentative }
+      const entry = { roman, display: roman.text, alternatives: [], labels: [] }
       if (!roman.diatonic) {
-        const target = secondaryTarget(r, i, key)
+        const target = secondaryTarget(groups, i, key)
         if (target) {
           const targetBase = romans[i + 1].base
-          const seventh = e.chord.quality === '7' ? '7' : e.chord.quality === '9' ? '9' : ''
+          const seventh = g.chord.quality === '7' ? '7' : g.chord.quality === '9' ? '9' : ''
           entry.display = `V${seventh}/${targetBase}${roman.figure}`
           entry.alternatives.push(roman.text)
-          entry.labels.push(`副属和弦：解决到 ${targetBase}`)
+          entry.labels.push(m('analysis.secondaryLabel', { target: targetBase }))
           result.progressions.push({
-            startTick: e.startTick, endTick: target.startTick + target.durationTick,
-            text: `${entry.display}–${romans[i + 1].text}`, name: '副属和弦',
-            detail: `非自然音的属功能和弦下行五度解决到 ${targetBase}；也可读作字面级数 ${roman.text}`,
+            startTick: g.startTick, endTick: target.startTick + target.durationTick,
+            text: `${entry.display}–${romans[i + 1].text}`, name: m('prog.secondary'),
+            detail: m('analysis.secondaryDetail', { target: targetBase, literal: roman.text }),
           })
-        } else if (isBorrowed(e.chord, key)) {
+        } else if (isBorrowed(g.chord, key)) {
           const source = keyLabel(parallel(key))
-          entry.labels.push(`借用和弦（来自 ${source}）`)
+          entry.labels.push(m('analysis.borrowedLabel', { source }))
           result.progressions.push({
-            startTick: e.startTick, endTick: e.startTick + e.durationTick, text: roman.text,
-            name: '借用和弦', detail: `${roman.text} 的音都属于同主音的 ${source}`,
+            startTick: g.startTick, endTick: g.startTick + g.durationTick, text: roman.text,
+            name: m('prog.borrowed'), detail: m('analysis.borrowedDetail', { roman: roman.text, source }),
           })
-        } else entry.labels.push('半音和弦（未归类）')
+        } else entry.labels.push(m('analysis.chromatic'))
       }
       if (roman.bassText) entry.labels.push(roman.bassText)
-      result.chords[e.id] = entry
+      for (const e of g.events) result.chords[e.id] = { ...entry, tentative: !!e.tentative }
     })
-    matchPatterns(r, romans, key, result.progressions)
+    const last = groups[groups.length - 1]
+    result.runs.push({
+      startTick: groups[0].startTick, endTick: last.startTick + last.durationTick,
+      text: romans.map((x) => x.text).join('–'), numbers: romans.map((x) => x.number).join('–'),
+      tentative: r.some((e) => e.tentative),
+    })
+    matchPatterns(groups, romans, key, result.progressions)
   }
   result.progressions.sort((a, b) => a.startTick - b.startTick || b.endTick - a.endTick)
   result.modulationHints = modulationHints(chords.filter((e) => e.chord), key)
@@ -263,8 +287,8 @@ function matchPatterns(run, romans, key, out) {
       const slice = romans.slice(i, end + 1)
       out.push({
         startTick: run[i].startTick, endTick: run[end].startTick + run[end].durationTick,
-        text: slice.map((r) => r.text).join('–'), name: p.name,
-        detail: `${p.seq.join('–')}（${slice.map((r) => r.number).join('–')}）`,
+        text: slice.map((r) => r.text).join('–'), name: m(p.name),
+        detail: m('prog.detail', { seq: p.seq.join('–'), numbers: slice.map((r) => r.number).join('–') }),
       })
     }
   }
@@ -283,7 +307,7 @@ function modulationHints(chords, key) {
     const last = hints[hints.length - 1]
     const endTick = win[3].startTick + win[3].durationTick
     if (last && sameKey(last.key, best.k) && last.endTick >= win[0].startTick) last.endTick = endTick
-    else hints.push({ startTick: win[0].startTick, endTick, key: best.k, label: `可能转调到 ${keyLabel(best.k)}（待确认）` })
+    else hints.push({ startTick: win[0].startTick, endTick, key: best.k, label: m('analysis.modulation', { key: keyLabel(best.k) }) })
   }
   return hints
 }

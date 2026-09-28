@@ -1,3 +1,5 @@
+import { m } from '../i18n/translate.js'
+
 // Undo/redo over whole-project snapshots. Monitoring state (mute/solo/volume, loop range,
 // loaded sound bank) is carried forward so undo only reverts musical edits. `revision`
 // only increases, so a restored snapshot still reads as a new input version.
@@ -49,7 +51,7 @@ export function historyReducer(state, action) {
         past: state.past.slice(0, -1),
         present: carryMonitoring(state.present, prev.project),
         future: [{ project: state.present, label: prev.label }, ...state.future],
-        lastLabel: `撤销：${prev.label}`,
+        lastLabel: m('history.undone', { label: prev.label }),
       }
     }
     case 'redo': {
@@ -59,7 +61,7 @@ export function historyReducer(state, action) {
         past: [...state.past, { project: state.present, label: next.label }],
         present: carryMonitoring(state.present, next.project),
         future: state.future.slice(1),
-        lastLabel: `重做：${next.label}`,
+        lastLabel: m('history.redone', { label: next.label }),
       }
     }
     default:

@@ -1,0 +1,754 @@
+{
+  "id": "prj_mulagnuo4jj9qj",
+  "schemaVersion": 1,
+  "revision": 164,
+  "name": "a02_same_program",
+  "ppq": 960,
+  "quarterBpm": 120,
+  "timeSignature": {
+    "numerator": 4,
+    "denominator": 4
+  },
+  "loopRange": {
+    "startTick": 0,
+    "endTick": 15360,
+    "enabled": true
+  },
+  "keyContext": null,
+  "chordTrack": [
+    {
+      "id": "chd_mulaoxcz8291ds",
+      "startTick": 0,
+      "durationTick": 3840,
+      "kind": "chord",
+      "chord": {
+        "rootPc": 0,
+        "rootSpelling": "C",
+        "quality": "maj",
+        "additions": [],
+        "bassPc": 4,
+        "bassSpelling": "E"
+      },
+      "source": "midi_detected",
+      "status": "confirmed",
+      "sourceTrackId": "trk_mulajs056mjwzj",
+      "sourceNoteIds": [
+        "n_mulajw426opcpt",
+        "n_mulajw426psfcj",
+        "n_mulajw426q134w",
+        "n_mulakg5673w9qf"
+      ],
+      "sourceSignature": "52@0+3840|55@0+3840|60@0+3840|64@0+3840"
+    },
+    {
+      "id": "chd_mulaoxcz83s8kh",
+      "startTick": 3840,
+      "durationTick": 3840,
+      "kind": "chord",
+      "chord": {
+        "rootPc": 7,
+        "rootSpelling": "G",
+        "quality": "min",
+        "additions": [],
+        "bassPc": 2,
+        "bassSpelling": "D"
+      },
+      "source": "midi_detected",
+      "status": "confirmed",
+      "sourceTrackId": "trk_mulajs056mjwzj",
+      "sourceNoteIds": [
+        "n_mulajxtq6r17ys",
+        "n_mulajxtq6spjn9",
+        "n_mulajxtq6tbbqq",
+        "n_mulajxtq6uuaw3"
+      ],
+      "sourceSignature": "50@3840+3840|55@3840+3840|58@3840+3840|62@3840+3840"
+    },
+    {
+      "id": "chd_mulaoxcz8426db",
+      "startTick": 7680,
+      "durationTick": 2880,
+      "kind": "chord",
+      "chord": {
+        "rootPc": 5,
+        "rootSpelling": "F",
+        "quality": "maj",
+        "additions": [],
+        "bassPc": 0,
+        "bassSpelling": "C"
+      },
+      "source": "midi_detected",
+      "status": "confirmed",
+      "sourceTrackId": "trk_mulajs056mjwzj",
+      "sourceNoteIds": [
+        "n_mulajzdu6vnb8l",
+        "n_mulajzdu6wyzvl",
+        "n_mulajzdu6xwex5",
+        "n_mulajzdu6yl18p"
+      ],
+      "sourceSignature": "48@10485+4875|48@7680+3840|53@10544+4816|53@7680+3840|57@10517+4843|57@7680+3840|60@7680+3840"
+    },
+    {
+      "id": "chd_mulaoxcz857aim",
+      "startTick": 10560,
+      "durationTick": 4800,
+      "kind": "chord",
+      "chord": {
+        "rootPc": 5,
+        "rootSpelling": "F",
+        "quality": "maj",
+        "additions": [],
+        "bassPc": 0,
+        "bassSpelling": "C"
+      },
+      "source": "midi_detected",
+      "status": "confirmed",
+      "sourceTrackId": "trk_mulajs056mjwzj",
+      "sourceNoteIds": [
+        "n_mulajzdu6vnb8l",
+        "n_mulajzdu6wyzvl",
+        "n_mulajzdu6xwex5",
+        "n_mulajzdu6yl18p",
+        "n_mulao9kp7z1mx4",
+        "n_mulao9kp8019e3",
+        "n_mulao9kp81uuxg"
+      ],
+      "sourceSignature": "48@10485+4875|48@7680+3840|53@10544+4816|53@7680+3840|57@10517+4843|57@7680+3840|60@7680+3840"
+    }
+  ],
+  "tracks": [
+    {
+      "id": "trk_mulajs056mjwzj",
+      "name": "轨道 2",
+      "role": "melody",
+      "program": 0,
+      "isDrum": false,
+      "soundbankId": "GeneralUser-GS.sf2:32319396:9575028c7a1f589f",
+      "volume": 100,
+      "pan": 0,
+      "mute": false,
+      "solo": false,
+      "clips": [
+        {
+          "id": "clip_mulajs056nwn4j",
+          "startTick": 0,
+          "lengthTick": 15360,
+          "status": "committed",
+          "origin": "user",
+          "notes": [
+            {
+              "id": "n_mulajw426opcpt",
+              "pitch": 60,
+              "startTick": 0,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulajw426psfcj",
+              "pitch": 52,
+              "startTick": 0,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulajw426q134w",
+              "pitch": 55,
+              "startTick": 0,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulajxtq6r17ys",
+              "pitch": 55,
+              "startTick": 3840,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulajxtq6spjn9",
+              "pitch": 50,
+              "startTick": 3840,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulajxtq6tbbqq",
+              "pitch": 58,
+              "startTick": 3840,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulajxtq6uuaw3",
+              "pitch": 62,
+              "startTick": 3840,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulajzdu6vnb8l",
+              "pitch": 53,
+              "startTick": 7680,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulajzdu6wyzvl",
+              "pitch": 48,
+              "startTick": 7680,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulajzdu6xwex5",
+              "pitch": 57,
+              "startTick": 7680,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulajzdu6yl18p",
+              "pitch": 60,
+              "startTick": 7680,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulakg5673w9qf",
+              "pitch": 64,
+              "startTick": 0,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulao9kp7z1mx4",
+              "pitch": 48,
+              "startTick": 10485,
+              "durationTick": 4875,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulao9kp8019e3",
+              "pitch": 57,
+              "startTick": 10517,
+              "durationTick": 4843,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulao9kp81uuxg",
+              "pitch": 53,
+              "startTick": 10544,
+              "durationTick": 4816,
+              "velocity": 80
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trk_mulap78786mzja",
+      "name": "轨道 2",
+      "role": "melody",
+      "program": 42,
+      "isDrum": false,
+      "soundbankId": "GeneralUser-GS.sf2:32319396:9575028c7a1f589f",
+      "volume": 100,
+      "pan": 0,
+      "mute": false,
+      "solo": false,
+      "clips": [
+        {
+          "id": "clip_mulap78787rs4m",
+          "startTick": 0,
+          "lengthTick": 15360,
+          "status": "committed",
+          "origin": "user",
+          "notes": [
+            {
+              "id": "n_mularo0e8ewfjj",
+              "pitch": 52,
+              "startTick": 0,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mularo0e8fcfl5",
+              "pitch": 57,
+              "startTick": 3840,
+              "durationTick": 1200,
+              "velocity": 80
+            },
+            {
+              "id": "n_mularo0e8gdtwm",
+              "pitch": 55,
+              "startTick": 4800,
+              "durationTick": 2640,
+              "velocity": 80
+            },
+            {
+              "id": "n_mularo0e8hrram",
+              "pitch": 51,
+              "startTick": 7200,
+              "durationTick": 240,
+              "velocity": 80
+            },
+            {
+              "id": "n_mularo0e8idtt6",
+              "pitch": 50,
+              "startTick": 7440,
+              "durationTick": 3120,
+              "velocity": 80
+            },
+            {
+              "id": "n_mularo0e8jva3d",
+              "pitch": 48,
+              "startTick": 10560,
+              "durationTick": 3840,
+              "velocity": 80
+            },
+            {
+              "id": "n_mularo0e8kareu",
+              "pitch": 45,
+              "startTick": 14400,
+              "durationTick": 240,
+              "velocity": 80
+            },
+            {
+              "id": "n_mularo0e8lqff1",
+              "pitch": 50,
+              "startTick": 14640,
+              "durationTick": 480,
+              "velocity": 80
+            },
+            {
+              "id": "n_mularo0e8m7mzo",
+              "pitch": 51,
+              "startTick": 14880,
+              "durationTick": 480,
+              "velocity": 80
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trk_mulasvzl8ndk7m",
+      "name": "轨道 3",
+      "role": "drums",
+      "program": 0,
+      "isDrum": true,
+      "soundbankId": "GeneralUser-GS.sf2:32319396:9575028c7a1f589f",
+      "volume": 100,
+      "pan": 0,
+      "mute": false,
+      "solo": false,
+      "clips": [
+        {
+          "id": "clip_mulasvzl8o1hxe",
+          "startTick": 0,
+          "lengthTick": 15120,
+          "status": "committed",
+          "origin": "user",
+          "notes": [
+            {
+              "id": "n_mulayzly9w7pvu",
+              "pitch": 42,
+              "startTick": 0,
+              "durationTick": 480,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzly9xa9e0",
+              "pitch": 36,
+              "startTick": 0,
+              "durationTick": 720,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzly9y72ox",
+              "pitch": 42,
+              "startTick": 960,
+              "durationTick": 480,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzly9zme5f",
+              "pitch": 42,
+              "startTick": 1920,
+              "durationTick": 240,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlya07w1c",
+              "pitch": 40,
+              "startTick": 1920,
+              "durationTick": 960,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlya18o71",
+              "pitch": 42,
+              "startTick": 2880,
+              "durationTick": 240,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlya2rb5u",
+              "pitch": 42,
+              "startTick": 3840,
+              "durationTick": 480,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlya324yb",
+              "pitch": 36,
+              "startTick": 3840,
+              "durationTick": 960,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlya4krjj",
+              "pitch": 42,
+              "startTick": 4800,
+              "durationTick": 480,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlya58if2",
+              "pitch": 42,
+              "startTick": 5760,
+              "durationTick": 480,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlya6op6k",
+              "pitch": 40,
+              "startTick": 5760,
+              "durationTick": 960,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlya77w5h",
+              "pitch": 42,
+              "startTick": 6720,
+              "durationTick": 480,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlya8m2fz",
+              "pitch": 42,
+              "startTick": 7680,
+              "durationTick": 480,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlya9du3i",
+              "pitch": 36,
+              "startTick": 7680,
+              "durationTick": 960,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlyaaf1y8",
+              "pitch": 42,
+              "startTick": 8640,
+              "durationTick": 480,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlyabtmgs",
+              "pitch": 42,
+              "startTick": 9600,
+              "durationTick": 480,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlyacp30x",
+              "pitch": 40,
+              "startTick": 9600,
+              "durationTick": 720,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlyadwec8",
+              "pitch": 42,
+              "startTick": 10560,
+              "durationTick": 480,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlyaeon6x",
+              "pitch": 42,
+              "startTick": 11520,
+              "durationTick": 240,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlyaf78j5",
+              "pitch": 36,
+              "startTick": 10560,
+              "durationTick": 1920,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlyagg2n4",
+              "pitch": 42,
+              "startTick": 12480,
+              "durationTick": 480,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlyahc2sa",
+              "pitch": 42,
+              "startTick": 13440,
+              "durationTick": 240,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlyaij73g",
+              "pitch": 40,
+              "startTick": 13440,
+              "durationTick": 960,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlyajthap",
+              "pitch": 42,
+              "startTick": 14400,
+              "durationTick": 720,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulayzlyakdrv8",
+              "pitch": 36,
+              "startTick": 14880,
+              "durationTick": 240,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedaly342",
+              "pitch": 51,
+              "startTick": 33,
+              "durationTick": 171,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedamn65w",
+              "pitch": 51,
+              "startTick": 982,
+              "durationTick": 115,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedanm4ck",
+              "pitch": 51,
+              "startTick": 1909,
+              "durationTick": 197,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedao0ufg",
+              "pitch": 51,
+              "startTick": 2626,
+              "durationTick": 83,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedap1c5a",
+              "pitch": 51,
+              "startTick": 2888,
+              "durationTick": 178,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedaqk1ng",
+              "pitch": 51,
+              "startTick": 3833,
+              "durationTick": 205,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedar7ql0",
+              "pitch": 51,
+              "startTick": 4811,
+              "durationTick": 204,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedasi4ap",
+              "pitch": 51,
+              "startTick": 5760,
+              "durationTick": 240,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedatevkm",
+              "pitch": 51,
+              "startTick": 6510,
+              "durationTick": 58,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedautpdh",
+              "pitch": 51,
+              "startTick": 6741,
+              "durationTick": 204,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedavzwai",
+              "pitch": 51,
+              "startTick": 7680,
+              "durationTick": 240,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedawk2k1",
+              "pitch": 51,
+              "startTick": 8640,
+              "durationTick": 240,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedaxj536",
+              "pitch": 51,
+              "startTick": 9600,
+              "durationTick": 240,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedayy64t",
+              "pitch": 51,
+              "startTick": 10318,
+              "durationTick": 140,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedazo771",
+              "pitch": 51,
+              "startTick": 10600,
+              "durationTick": 175,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedb0jc3y",
+              "pitch": 51,
+              "startTick": 11523,
+              "durationTick": 208,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedb1qp6a",
+              "pitch": 51,
+              "startTick": 12474,
+              "durationTick": 173,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedb2xamz",
+              "pitch": 51,
+              "startTick": 13440,
+              "durationTick": 240,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedb3l8hx",
+              "pitch": 51,
+              "startTick": 14086,
+              "durationTick": 148,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb0qedb49yd5",
+              "pitch": 51,
+              "startTick": 14372,
+              "durationTick": 173,
+              "velocity": 80
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trk_mulb1ml0b5ik9p",
+      "name": "轨道 4",
+      "role": "melody",
+      "program": 22,
+      "isDrum": false,
+      "soundbankId": "GeneralUser-GS.sf2:32319396:9575028c7a1f589f",
+      "volume": 100,
+      "pan": 0,
+      "mute": false,
+      "solo": false,
+      "clips": [
+        {
+          "id": "clip_mulb1ml0b64pg0",
+          "startTick": 0,
+          "lengthTick": 15275,
+          "status": "committed",
+          "origin": "user",
+          "notes": [
+            {
+              "id": "n_mulb6eywbawuvk",
+              "pitch": 62,
+              "startTick": 0,
+              "durationTick": 3503,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb6eywbb1pou",
+              "pitch": 60,
+              "startTick": 3465,
+              "durationTick": 374,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb6eywbcdq07",
+              "pitch": 62,
+              "startTick": 3723,
+              "durationTick": 3515,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb6eywbdnaas",
+              "pitch": 60,
+              "startTick": 7328,
+              "durationTick": 344,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb6eywbefekz",
+              "pitch": 62,
+              "startTick": 7559,
+              "durationTick": 1120,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb6eywbft0t3",
+              "pitch": 64,
+              "startTick": 8488,
+              "durationTick": 1001,
+              "velocity": 80
+            },
+            {
+              "id": "n_mulb6eywbg7d3s",
+              "pitch": 57,
+              "startTick": 10491,
+              "durationTick": 4784,
+              "velocity": 80
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "generations": [],
+  "soundbanks": [
+    {
+      "id": "GeneralUser-GS.sf2:32319396:9575028c7a1f589f",
+      "name": "GeneralUser-GS.sf2",
+      "byteLength": 32319396,
+      "sha256": "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe"
+    }
+  ]
+}

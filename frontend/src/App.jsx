@@ -7,8 +7,9 @@ import InstrumentPicker from './components/InstrumentPicker.jsx'
 import KeyboardPanel from './components/KeyboardPanel.jsx'
 import Modal from './components/Modal.jsx'
 import Timeline from './components/Timeline.jsx'
-import TrackList from './components/TrackList.jsx'
 import Transport from './components/Transport.jsx'
+import { useI18n } from './i18n/I18n.jsx'
+import { m, translate } from './i18n/translate.js'
 import { analyzeHarmony } from './music/analysis.js'
 import { chordSymbol, detectChord, eventSymbol, notesSignature, segmentChords, voiceChord } from './music/chords.js'
 import { historyReducer, initHistory } from './music/history.js'
@@ -30,9 +31,21 @@ function download(name, data, type) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 const safeName = (name) => (name || 'flux').replace(/[\\/:*?"<>|]+/g, '_')
+// Local time stamp so repeated saves/exports of one project never share a file name
+// (a second save within the same second gets -2, -3, …).
+let lastStamp = null
+let sameSecond = 0
+function stamp(d = new Date()) {
+  const p = (n) => String(n).padStart(2, '0')
+  const s = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
+  sameSecond = s === lastStamp ? sameSecond + 1 : 1
+  lastStamp = s
+  return sameSecond > 1 ? `${s}-${sameSecond}` : s
+}
 
 export default function App() {
-  const [history, dispatch] = useReducer(historyReducer, null, () => initHistory(P.createProject()))
+  const { lang } = useI18n()
+  const [history, dispatch] = useReducer(historyReducer, null, () => initHistory(P.createProject(lang)))
   const project = history.present
   const apply = useCallback((label, fn) => dispatch({ type: 'apply', label, fn }), [])
   const monitor = useCallback((fn) => dispatch({ type: 'monitor', fn }), [])
@@ -173,7 +186,7 @@ export default function App() {
     const s = state.current
     const step = noteValueTicks(s.stepValueId)
     const at = s.playhead
-    apply('步进输入', (p) => P.addNotes(p, s.inputTarget.id, group.map((g) => ({ ...g, startTick: at, durationTick: step }))))
+    apply(m('label.stepInput'), (p) => P.addNotes(p, s.inputTarget.id, group.map((g) => ({ ...g, startTick: at, durationTick: step }))))
     setPlayhead(at + step)
   }
 
@@ -193,7 +206,16 @@ export default function App() {
     }
     if (isEditableTarget(e.target) || document.querySelector('dialog[open]')) return
     const mod = e.metaKey || e.ctrlKey
-    if (mod && e.code === 'KeyZ') {
+    if (e.code === 'Space' && !mod && !e.altKey) {
+      // Space: play from the playhead / pause / stop recording. preventDefault keeps a focused
+      // button from also clicking and the page from scrolling.
+      e.preventDefault()
+      if (e.repeat) return
+      const t = state.current.transport
+      if (t === 'recording') stopTransport(true)
+      else if (t === 'playing') stopTransport(false)
+      else play()
+    } else if (mod && e.code === 'KeyZ') {
       e.preventDefault()
       if (state.current.transport === 'recording') return
       dispatch({ type: e.shiftKey ? 'redo' : 'undo' })
@@ -204,7 +226,10 @@ export default function App() {
   }
   useEffect(() => {
     const onDown = (e) => keyHandlerRef.current(e)
-    const onUp = (e) => kb.keyUp(e)
+    const onUp = (e) => {
+      kb.keyUp(e)
+      if (e.code === 'Space' && !isEditableTarget(e.target) && !document.querySelector('dialog[open]')) e.preventDefault()
+    }
     const onBlur = () => releaseKeys()
     const onVisibility = () => { if (document.hidden) releaseKeys() }
     window.addEventListener('keydown', onDown)
@@ -257,8 +282,8 @@ export default function App() {
     const notes = take.finish(stopTick)
     const target = state.current.armedTrack
     if (notes.length && target) {
-      apply(`录音（${notes.length} 个音）`, (p) => P.addNotes(p, target.id, notes))
-      say(`已录入 ${notes.length} 个音到「${target.name}」，可撤销`)
+      apply(m('label.recordTake', { n: notes.length }), (p) => P.addNotes(p, target.id, notes))
+      say(m('notice.recorded', { n: notes.length, name: target.name }))
     }
   }, [apply, say])
 
@@ -273,15 +298,15 @@ export default function App() {
   }, [finishTake, releaseKeys])
 
   const play = (fromTick = playhead) => {
-    if (!engine.ready) return say('先点“启用声音”并载入音源', 'warn')
+    if (!engine.ready) return say(m('notice.enableFirst'), 'warn')
     playStartRef.current = fromTick
     engine.play({ project, fromTick, metronome })
     setTransport('playing')
   }
 
   const record = () => {
-    if (!engine.ready) return say('先点“启用声音”并载入音源', 'warn')
-    if (!armedTrack) return say('先点某条轨道的 R 准备录音', 'warn')
+    if (!engine.ready) return say(m('notice.enableFirst'), 'warn')
+    if (!armedTrack) return say(m('notice.armFirst'), 'warn')
     if (transport !== 'stopped') stopTransport(false)
     releaseKeys()
     playStartRef.current = playhead
@@ -314,18 +339,18 @@ export default function App() {
   function deleteSelection() {
     if (state.current.transport === 'recording') return
     if (selectedNoteIds.size) {
-      apply(`删除 ${selectedNoteIds.size} 个音符`, (p) => P.deleteNotes(p, selectedTrack.id, [...selectedNoteIds]))
+      apply(m('label.deleteNotes', { n: selectedNoteIds.size }), (p) => P.deleteNotes(p, selectedTrack.id, [...selectedNoteIds]))
       setSelectedNoteIds(new Set())
     } else if (chordSelection?.type === 'event') {
-      apply('删除和弦', (p) => P.deleteChord(p, chordSelection.id))
+      apply(m('label.deleteChord'), (p) => P.deleteChord(p, chordSelection.id))
       setChordSelection(null)
     }
   }
 
   const addTrack = () => {
     let id
-    apply('添加轨道', (p) => {
-      const r = P.addTrack(p, { name: `轨道 ${p.tracks.length + 1}`, program: 0, soundbankId: engine.soundbank?.id ?? null })
+    apply(m('label.addTrack'), (p) => {
+      const r = P.addTrack(p, { name: translate(lang, 'project.trackN', { n: p.tracks.length + 1 }), program: 0, soundbankId: engine.soundbank?.id ?? null })
       id = r.trackId
       return r.project
     })
@@ -344,49 +369,49 @@ export default function App() {
   }
 
   const openProjectFile = async (file) => {
-    const result = P.parseProjectFile(await file.text())
+    const result = P.parseProjectFile(await file.text(), lang)
     if (!result.ok) {
-      setModal({ title: `无法打开 ${file.name}`, lines: result.errors, tone: 'error', note: '当前项目保持不变。' })
+      setModal({ title: m('modal.cannotOpen', { file: file.name }), lines: result.errors, tone: 'error', note: m('modal.projectUnchanged') })
       return
     }
-    loadProject(result.project, `打开项目 ${file.name}`)
-    say(`已打开 ${file.name}`)
+    loadProject(result.project, m('label.openProject', { file: file.name }))
+    say(m('notice.opened', { file: file.name }))
   }
 
-  const saveProject = () => download(`${safeName(project.name)}.flux.json`, P.serializeProject(project), 'application/json')
+  const saveProject = () => download(`${safeName(project.name)}-${stamp()}.flux.json`, P.serializeProject(project), 'application/json')
 
   const importMidiFile = async (file) => {
-    const result = importMidi(new Uint8Array(await file.arrayBuffer()), { name: file.name.replace(/\.midi?$/i, '') })
+    const result = importMidi(new Uint8Array(await file.arrayBuffer()), { name: file.name.replace(/\.midi?$/i, ''), lang })
     if (!result.ok) {
-      setModal({ title: `无法导入 ${file.name}`, lines: result.errors, tone: 'error', note: '当前项目保持不变。' })
+      setModal({ title: m('modal.cannotImport', { file: file.name }), lines: result.errors, tone: 'error', note: m('modal.projectUnchanged') })
       return
     }
-    const summary = `${result.stats.tracks} 条轨、${result.stats.notes} 个音符，原 PPQ ${result.stats.sourcePpq}`
+    const summary = m('notice.importSummary', { tracks: result.stats.tracks, notes: result.stats.notes, ppq: result.stats.sourcePpq })
     const doImport = () => {
-      loadProject(result.project, `导入 MIDI ${file.name}`)
-      say(`已导入 ${file.name}：${summary}`)
+      loadProject(result.project, m('label.importMidi', { file: file.name }))
+      say(m('notice.imported', { file: file.name, summary }))
     }
     if (!result.limitations.length) {
       doImport()
-      if (result.notices.length) say(result.notices.join('；'))
+      if (result.notices.length) say(result.notices)
       return
     }
     setModal({
-      title: `导入 ${file.name} 会丢失以下信息`, lines: [...result.limitations, ...result.notices], tone: 'warn',
-      note: `将导入 ${summary}。本阶段只支持固定速度、固定拍号的音符数据。`,
-      actions: [{ label: '仍然导入', primary: true, run: doImport }],
+      title: m('modal.importLoses', { file: file.name }), lines: [...result.limitations, ...result.notices], tone: 'warn',
+      note: m('modal.importNote', { summary }),
+      actions: [{ label: m('modal.importAnyway'), primary: true, run: doImport }],
     })
   }
 
   const exportMidiFile = () => {
     const plan = planExport(project)
     if (!plan.ok) {
-      setModal({ title: '无法导出 MIDI', lines: plan.errors, tone: 'error' })
+      setModal({ title: m('modal.cannotExport'), lines: plan.errors, tone: 'error' })
       return
     }
-    const doExport = () => download(`${safeName(project.name)}.mid`, exportMidi(project, plan), 'audio/midi')
+    const doExport = () => download(`${safeName(project.name)}-${stamp()}.mid`, exportMidi(project, plan), 'audio/midi')
     if (!plan.warnings.length) return doExport()
-    setModal({ title: '导出前请确认', lines: plan.warnings, tone: 'warn', actions: [{ label: '继续导出', primary: true, run: doExport }] })
+    setModal({ title: m('modal.confirmExport'), lines: plan.warnings, tone: 'warn', actions: [{ label: m('modal.exportAnyway'), primary: true, run: doExport }] })
   }
 
   // --- Chords --------------------------------------------------------------------------
@@ -408,14 +433,14 @@ export default function App() {
       startTick: s.startTick, durationTick: s.endTick - s.startTick, kind: 'chord', chord: candidate.chord,
       source: 'midi_detected', sourceTrackId: analysisTrack.id, sourceNoteIds: s.noteIds,
       sourceSignature: notesSignature(analysisNotes, s.startTick, s.endTick),
-    }, `采用和弦建议 ${chordSymbol(candidate.chord)}`)
+    }, m('label.adoptSuggestion', { symbol: chordSymbol(candidate.chord) }))
     setChordSelection(null)
   }
 
   const adoptAllSuggestions = () => {
     const list = harmony.suggestions.filter((s) => s.detection.candidates.length)
     if (!list.length) return
-    apply(`采用全部 ${list.length} 个和弦建议`, (p) => list.reduce((q, s) => P.placeChord(q, {
+    apply(m('label.adoptAll', { n: list.length }), (p) => list.reduce((q, s) => P.placeChord(q, {
       startTick: s.startTick, durationTick: s.endTick - s.startTick, kind: 'chord', chord: s.detection.candidates[0].chord,
       source: 'midi_detected', status: 'confirmed', sourceTrackId: analysisTrack.id, sourceNoteIds: s.noteIds,
       sourceSignature: notesSignature(analysisNotes, s.startTick, s.endTick),
@@ -432,19 +457,39 @@ export default function App() {
   const writeLiveChord = (candidate) => {
     const { startTick, endTick } = defaultChordRange()
     writeChord({ startTick, durationTick: endTick - startTick, kind: 'chord', chord: candidate.chord, source: 'midi_detected' },
-      `写入和弦 ${chordSymbol(candidate.chord)}`)
-    say(`已写入 ${chordSymbol(candidate.chord)}（${startTick / PPQ}–${endTick / PPQ} 拍），可撤销`)
+      m('label.writeChord', { symbol: chordSymbol(candidate.chord) }))
+    say(m('notice.chordWritten', { symbol: chordSymbol(candidate.chord), start: startTick / PPQ, end: endTick / PPQ }))
   }
 
   const previewChord = (chord) => {
-    if (!engine.preview(voiceChord(chord), analysisTrack ?? { program: 0, isDrum: false })) say('声音未启用，无法试听', 'warn')
+    if (!engine.preview(voiceChord(chord), analysisTrack ?? { program: 0, isDrum: false })) say(m('notice.noSoundPreview'), 'warn')
+  }
+
+  // Explicit "chord track → new MIDI track": block chords from confirmed chords only, optionally
+  // limited to the selected range. The chord track itself never sounds or exports.
+  const chordsToTrack = (range) => {
+    const bounds = range ? { startTick: range.startTick, endTick: range.endTick } : {}
+    const notes = P.chordTrackNotes(project.chordTrack, bounds)
+    if (!notes.length) return say(m(range ? 'notice.noChordsInRange' : 'notice.noConfirmedChords'), 'warn')
+    const n = project.chordTrack.filter((e) => e.status === 'confirmed' && e.kind === 'chord'
+      && e.startTick < (bounds.endTick ?? Infinity) && e.startTick + e.durationTick > (bounds.startTick ?? 0)).length
+    const name = translate(lang, 'project.chordTrackName')
+    let id
+    apply(m('label.chordsToTrack', { n }), (p) => {
+      const r = P.addTrack(p, { name, program: 0, soundbankId: engine.soundbank?.id ?? null })
+      id = r.trackId
+      return P.addNotes(r.project, id, notes)
+    })
+    setTimeout(() => id && setSelectedTrackId(id))
+    say(m('notice.chordsToTrack', { n, name }))
+    return undefined
   }
 
   // --- Verification hook (read-only state + perf) --------------------------------------
   useEffect(() => {
     window.__flux = {
       engine, perf, project, history: { past: history.past.length, future: history.future.length },
-      harmony, liveChord, selectedTrackId, armedTrackId, playhead, transport,
+      harmony, liveChord, selectedTrackId, armedTrackId, playhead, transport, lang, selectedNoteIds: [...selectedNoteIds],
       symbols: () => project.chordTrack.map(eventSymbol),
     }
   })
@@ -464,11 +509,11 @@ export default function App() {
       <Header
         project={project} history={history} dispatch={dispatch} engine={engine}
         onRename={(name) => monitor((p) => P.renameProject(p, name))}
-        onNew={() => loadProject(P.createProject(), '新建项目')}
-        onExample={() => loadProject(P.createExampleProject(), '载入示例')}
+        onNew={() => loadProject(P.createProject(lang), m('label.newProject'))}
+        onExample={() => loadProject(P.createExampleProject(lang), m('label.loadExample'))}
         onOpen={openProjectFile} onSave={saveProject} onImportMidi={importMidiFile} onExportMidi={exportMidiFile}
         soundbankMismatch={soundbankMismatch}
-        onUseCurrentSoundbank={() => apply('改用当前音源', (p) => ({
+        onUseCurrentSoundbank={() => apply(m('label.useCurrentSoundbank'), (p) => ({
           ...p, soundbanks: [...p.soundbanks.filter((s) => s.id !== engine.soundbank.id), { ...engine.soundbank }],
           tracks: p.tracks.map((t) => ({ ...t, soundbankId: engine.soundbank.id })),
         }))}
@@ -483,19 +528,15 @@ export default function App() {
         apply={apply} monitor={monitor} say={say}
       />
       <main className="workspace">
-        <TrackList
-          project={project} selectedTrackId={selectedTrack.id} armedTrackId={armedTrackId}
-          onSelect={(id) => { setSelectedTrackId(id); setSelectedNoteIds(new Set()) }}
+        <Timeline {...layoutProps} setGridId={setGridId}
+          onSelectTrack={(id) => { if (id !== selectedTrack.id) setSelectedNoteIds(new Set()); setSelectedTrackId(id) }}
           onArm={(id) => setArmedTrackId((cur) => (cur === id ? null : id))}
-          onPickInstrument={(id) => setPicker(id)} onAddTrack={addTrack}
-          apply={apply} monitor={monitor} engine={engine} harmony={harmony} recording={transport === 'recording'}
-        />
-        <Timeline {...layoutProps} setGridId={setGridId} />
+          onPickInstrument={(id) => setPicker(id)} onAddTrack={addTrack} />
         <ChordPanel
           project={project} harmony={harmony} chordSelection={chordSelection} setChordSelection={setChordSelection}
           staleChords={staleChords} analysisTrack={analysisTrack} analysisNotes={analysisNotes} apply={apply}
           writeChord={writeChord} adoptSuggestion={adoptSuggestion} adoptAllSuggestions={adoptAllSuggestions}
-          previewChord={previewChord} defaultRange={defaultChordRange} say={say}
+          previewChord={previewChord} defaultRange={defaultChordRange} chordsToTrack={chordsToTrack} say={say}
         />
       </main>
       <KeyboardPanel
@@ -511,13 +552,17 @@ export default function App() {
         <InstrumentPicker
           track={P.findTrack(project, picker)} engine={engine} onClose={() => setPicker(null)}
           onChoose={(inst) => {
-            apply('切换音色', (p) => P.setTrackInstrument(p, picker, inst))
+            apply(m('label.changeInstrument'), (p) => P.setTrackInstrument(p, picker, inst))
             setPicker(null)
           }}
         />
       )}
       {modal && <Modal {...modal} onClose={() => setModal(null)} />}
-      {notice && <div className={`notice notice-${notice.tone}`} role="status">{notice.text}</div>}
+      {notice && (
+        <div className={`notice notice-${notice.tone}`} role="status">
+          {[].concat(notice.text).map((x) => translate(lang, x)).join(translate(lang, 'sep.clause'))}
+        </div>
+      )}
     </div>
   )
 }

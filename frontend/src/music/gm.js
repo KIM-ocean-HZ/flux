@@ -103,25 +103,25 @@ export const drumNoteName = (note) => GM_DRUM_NOTES.find((d) => d.note === note)
 
 // Quick presets from the spec; the full catalog stays one click away.
 export const INSTRUMENT_PRESETS = [
-  { label: '原声钢琴', program: 0, isDrum: false },
-  { label: '电钢琴', program: 4, isDrum: false },
-  { label: '尼龙弦吉他', program: 24, isDrum: false },
-  { label: '指弹贝斯', program: 33, isDrum: false },
-  { label: '合成贝斯', program: 38, isDrum: false },
-  { label: '弦乐', program: 48, isDrum: false },
-  { label: '合成 Pad', program: 89, isDrum: false },
-  { label: '标准鼓组', program: 0, isDrum: true },
+  { label: '原声钢琴', en: 'Acoustic Piano', program: 0, isDrum: false },
+  { label: '电钢琴', en: 'Electric Piano', program: 4, isDrum: false },
+  { label: '尼龙弦吉他', en: 'Nylon Guitar', program: 24, isDrum: false },
+  { label: '指弹贝斯', en: 'Finger Bass', program: 33, isDrum: false },
+  { label: '合成贝斯', en: 'Synth Bass', program: 38, isDrum: false },
+  { label: '弦乐', en: 'Strings', program: 48, isDrum: false },
+  { label: '合成 Pad', en: 'Synth Pad', program: 89, isDrum: false },
+  { label: '标准鼓组', en: 'Standard Drum Kit', program: 0, isDrum: true },
 ]
 
-export function instrumentName({ program, isDrum }) {
-  if (isDrum) return DRUM_KIT.zh
-  return GM_PROGRAMS[program]?.zh ?? `Program ${program + 1}`
+export function instrumentName({ program, isDrum }, lang = 'zh') {
+  if (isDrum) return DRUM_KIT[lang]
+  return GM_PROGRAMS[program]?.[lang] ?? `Program ${program + 1}`
 }
 
-export function instrumentLabel({ program, isDrum }) {
-  if (isDrum) return `${DRUM_KIT.zh} · Drums`
+export function instrumentLabel({ program, isDrum }, lang = 'zh') {
+  if (isDrum) return lang === 'zh' ? `${DRUM_KIT.zh} · Drums` : DRUM_KIT.en
   const p = GM_PROGRAMS[program]
-  return `${p.display}. ${p.zh} · ${p.en}`
+  return lang === 'zh' ? `${p.display}. ${p.zh} · ${p.en}` : `${p.display}. ${p.en}`
 }
 
 /** Case-insensitive search over Chinese/English names, family names and 1-based numbers. */

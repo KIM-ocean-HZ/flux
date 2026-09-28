@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { translate } from '../src/i18n/translate.js'
 import { makeChord } from '../src/music/chords.js'
 import {
-  addNotes, addTrack, audibleTrackIds, chordConflicts, copyChord, createExampleProject, createProject, deleteChord,
+  addNotes, addTrack, audibleTrackIds, chordConflicts, chordTrackNotes, copyChord, createExampleProject, createProject, deleteChord,
   deleteNotes, parseProjectFile, placeChord, quantizeNotes, serializeProject, setKeyContext, setTempo,
   setTimeSignature, setTrackMix, trackNotes, updateChord, updateNotes, validateProject,
 } from '../src/music/project.js'
@@ -126,11 +127,12 @@ describe('project JSON (A-06, CH-08)', () => {
   })
 
   it('rejects invalid files with readable reasons', () => {
-    expect(parseProjectFile('{not json').errors[0]).toMatch(/JSON/)
+    expect(translate('zh', parseProjectFile('{not json').errors[0])).toMatch(/JSON/)
     const bad = (mutate) => {
       const d = JSON.parse(serializeProject(rich()))
       mutate(d)
-      return validateProject(d)
+      const r = validateProject(d)
+      return r.ok ? r : { ...r, errors: r.errors.map((e) => translate('zh', e)) }
     }
     expect(bad((d) => { d.ppq = 480 }).errors.join()).toMatch(/ppq/)
     expect(bad((d) => { d.quarterBpm = 999 }).errors.join()).toMatch(/quarterBpm/)
@@ -140,7 +142,35 @@ describe('project JSON (A-06, CH-08)', () => {
     expect(bad((d) => { d.chordTrack[1].startTick = 100 }).errors.join()).toMatch(/重叠/)
     expect(bad((d) => { d.chordTrack[1].chord = d.chordTrack[0].chord }).errors.join()).toMatch(/N\.C\./)
     expect(bad((d) => { d.tracks[1].id = d.tracks[0].id }).errors.join()).toMatch(/重复 id/)
+    expect(translate('en', validateProject({ ...JSON.parse(serializeProject(rich())), ppq: 480 }).errors[0])).toBe('ppq must be 960; the file has 480')
     expect(bad((d) => { d.schemaVersion = 2 }).ok).toBe(false)
     expect(validateProject([]).ok).toBe(false)
+  })
+})
+
+describe('chord track to MIDI notes', () => {
+  const ev = (id, startTick, kind, chord, status = 'confirmed') => ({ id, startTick, durationTick: 3840, kind, chord, status, source: 'manual' })
+  const chordTrack = [
+    ev('a', 0, 'chord', makeChord('C', 'maj', 'E')),
+    ev('b', 3840, 'no_chord', undefined),
+    ev('c', 11520, 'chord', makeChord('G', '7')),
+    ev('d', 15360, 'chord', makeChord('A', 'min'), 'suggested'),
+  ]
+  const simple = (notes) => notes.map((n) => [n.pitch, n.startTick, n.durationTick])
+
+  it('writes confirmed chords as block chords with the dictionary voicing and slash bass', () => {
+    expect(simple(chordTrackNotes(chordTrack))).toEqual([
+      [52, 0, 3840], [60, 0, 3840], [64, 0, 3840], [67, 0, 3840],
+      [55, 11520, 3840], [67, 11520, 3840], [71, 11520, 3840], [74, 11520, 3840], [77, 11520, 3840],
+    ])
+  })
+
+  it('clips to a range; N.C., gaps and unconfirmed suggestions give no notes', () => {
+    expect(simple(chordTrackNotes(chordTrack, { startTick: 1920, endTick: 12480 }))).toEqual([
+      [52, 1920, 1920], [60, 1920, 1920], [64, 1920, 1920], [67, 1920, 1920],
+      [55, 11520, 960], [67, 11520, 960], [71, 11520, 960], [74, 11520, 960], [77, 11520, 960],
+    ])
+    expect(chordTrackNotes(chordTrack, { startTick: 3840, endTick: 11520 })).toEqual([])
+    expect(chordTrackNotes(chordTrack, { startTick: 15360 })).toEqual([])
   })
 })

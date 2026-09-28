@@ -1,9 +1,6 @@
 import { useRef } from 'react'
-
-const STATUS_TEXT = {
-  off: '声音未启用', starting: '正在启动音频…', 'needs-soundbank': '需要选择音源文件', loading: '正在载入音源…',
-  ready: '声音就绪', error: '音频启动失败',
-}
+import { useI18n } from '../i18n/I18n.jsx'
+import { LANGS } from '../i18n/translate.js'
 
 function FileButton({ label, accept, onFile, title, disabled }) {
   const ref = useRef(null)
@@ -21,53 +18,59 @@ function FileButton({ label, accept, onFile, title, disabled }) {
 
 export default function Header({ project, history, dispatch, onRename, engine, onNew, onExample, onOpen, onSave,
   onImportMidi, onExportMidi, soundbankMismatch, onUseCurrentSoundbank, recording }) {
+  const { t, lang, setLang } = useI18n()
   const status = engine.status
   const suspended = engine.ctx && engine.ctx.state !== 'running'
   const sb = engine.soundbank
   const coverage = engine.coverage
+  const bankAction = sb ? t('audio.changeBank') : t('audio.chooseBank')
   return (
     <header className="header">
       <div className="brand">FLUX</div>
-      <input className="project-name" aria-label="项目名称" value={project.name}
+      <input className="project-name" aria-label={t('header.projectName')} value={project.name}
         onChange={(e) => onRename(e.target.value)} />
       <div className="group">
         <button type="button" disabled={!history.past.length || recording} onClick={() => dispatch({ type: 'undo' })}
-          title={history.past.length ? `撤销：${history.past[history.past.length - 1].label}（⌘Z）` : '没有可撤销的操作'}>撤销</button>
+          title={history.past.length ? t('header.undoTitle', { label: history.past[history.past.length - 1].label }) : t('header.nothingToUndo')}>{t('header.undo')}</button>
         <button type="button" disabled={!history.future.length || recording} onClick={() => dispatch({ type: 'redo' })}
-          title={history.future.length ? `重做：${history.future[0].label}（⇧⌘Z）` : '没有可重做的操作'}>重做</button>
+          title={history.future.length ? t('header.redoTitle', { label: history.future[0].label }) : t('header.nothingToRedo')}>{t('header.redo')}</button>
       </div>
       <div className="group">
-        <button type="button" disabled={recording} onClick={onNew}>新建</button>
-        <button type="button" disabled={recording} onClick={onExample} title="载入《小星星》示例旋律（可撤销）">载入示例</button>
-        <FileButton label="打开项目" accept=".json,application/json" onFile={onOpen} disabled={recording} />
-        <button type="button" onClick={onSave} title="下载项目 JSON（含和弦轨、调性与音源标识）">保存项目</button>
-        <FileButton label="导入 MIDI" accept=".mid,.midi,audio/midi" onFile={onImportMidi} disabled={recording} />
-        <button type="button" onClick={onExportMidi}>导出 MIDI</button>
+        <button type="button" disabled={recording} onClick={onNew}>{t('header.new')}</button>
+        <button type="button" disabled={recording} onClick={onExample} title={t('header.exampleTitle')}>{t('header.example')}</button>
+        <FileButton label={t('header.open')} accept=".json,application/json" onFile={onOpen} disabled={recording} />
+        <button type="button" onClick={onSave} title={t('header.saveTitle')}>{t('header.save')}</button>
+        <FileButton label={t('header.importMidi')} accept=".mid,.midi,audio/midi" onFile={onImportMidi} disabled={recording} />
+        <button type="button" onClick={onExportMidi} title={t('header.exportTitle')}>{t('header.exportMidi')}</button>
       </div>
       <div className="audio-status" data-status={status}>
         {status === 'off' || status === 'error' || suspended ? (
           <button type="button" className="primary" onClick={() => engine.enable()}>
-            {status === 'error' ? '重试启用声音' : suspended ? '恢复声音' : '启用声音'}
+            {status === 'error' ? t('audio.retry') : suspended ? t('audio.resume') : t('audio.enable')}
           </button>
         ) : null}
         <span className={`status-dot status-${suspended ? 'error' : status}`} aria-hidden="true" />
         <span className="status-text" data-testid="audio-status">
-          {suspended ? `音频已暂停（${engine.ctx.state}）` : STATUS_TEXT[status]}
+          {suspended ? t('audio.suspended', { state: engine.ctx.state }) : t(`audio.status.${status}`)}
           {sb && status === 'ready' ? ` · ${sb.name}` : ''}
-          {coverage && status === 'ready' ? ` · GM ${coverage.melodic.size}/128${coverage.drumKit ? ' + 鼓组' : ' · 缺鼓组'}` : ''}
+          {coverage && status === 'ready' ? ` · GM ${coverage.melodic.size}/128${coverage.drumKit ? t('audio.plusDrums') : t('audio.noDrums')}` : ''}
         </span>
         {engine.synth && (
-          <FileButton label={sb ? '更换音源' : '选择音源文件'} accept=".sf2,.sf3,.dls"
-            onFile={(f) => engine.loadSoundbankFile(f)} title="本地 SF2／SF3／DLS 音色文件；项目只记录文件名、大小与哈希" />
+          <FileButton label={bankAction} accept=".sf2,.sf3,.dls" onFile={(f) => engine.loadSoundbankFile(f)} title={t('audio.bankTitle')} />
         )}
+        <select className="lang" aria-label={t('header.language')} value={lang} onChange={(e) => setLang(e.target.value)}>
+          {LANGS.map((l) => <option key={l} value={l}>{t(`lang.${l}`)}</option>)}
+        </select>
       </div>
-      {engine.error && <div className="banner banner-error" role="alert">{engine.error}</div>}
+      {engine.error && <div className="banner banner-error" role="alert">{t(engine.error)}</div>}
       {soundbankMismatch && (
         <div className="banner banner-warn" role="alert">
-          此项目的轨道使用音源「{soundbankMismatch.name}」（{(soundbankMismatch.byteLength / 1e6).toFixed(1)} MB，SHA-256 {soundbankMismatch.sha256?.slice(0, 12)}…），
-          {sb ? `当前载入的是「${sb.name}」。` : '当前尚未载入。'}
-          请用“{sb ? '更换音源' : '选择音源文件'}”重新定位该文件{sb ? '，或' : '。'}
-          {sb && <button type="button" onClick={onUseCurrentSoundbank}>改用当前音源</button>}
+          {t('audio.mismatch', {
+            name: soundbankMismatch.name, mb: (soundbankMismatch.byteLength / 1e6).toFixed(1), sha: soundbankMismatch.sha256?.slice(0, 12),
+          })}
+          {sb ? t('audio.mismatchLoaded', { name: sb.name }) : t('audio.mismatchNone')}
+          {t(sb ? 'audio.relocateOr' : 'audio.relocate', { action: bankAction })}
+          {sb && <button type="button" onClick={onUseCurrentSoundbank}>{t('audio.useCurrent')}</button>}
         </div>
       )}
     </header>

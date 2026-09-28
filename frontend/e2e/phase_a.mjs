@@ -91,17 +91,22 @@ async function download(trigger, name) {
   return path
 }
 const liveSymbol = () => page.locator('[data-testid=live-chord-symbol]').textContent({ timeout: 2000 }).catch(() => null)
-async function openEditorRange(startBar, endBar) {
-  // Drag across the chord lane (y = ruler 22 + 15) from startBar to endBar.
+// Head lanes (arrange view): bar/loop ruler 0–22, playhead bar 22–38, chord lane 38–68.
+const PLAYBAR_Y = 30
+const CHORD_Y = 53
+async function openEditorRange(startBar, endBar, { shift = false } = {}) {
+  // Drag across the chord lane from startBar to endBar (Shift: even across existing chords).
   const k = 56 / 960
   const bar = await flux(() => { const ts = window.__flux.project.timeSignature; return 960 * ts.numerator * 4 / ts.denominator })
   const svg = page.locator('.tl-head-svg')
-  await page.locator('.timeline-scroll').evaluate((el, x) => { el.scrollLeft = Math.max(0, x - 120) }, (startBar - 1) * bar * k)
+  await page.locator('.arrange-scroll').evaluate((el, x) => { el.scrollLeft = Math.max(0, x - 120) }, (startBar - 1) * bar * k)
   const box = await svg.boundingBox()
-  await page.mouse.move(box.x + (startBar - 1) * bar * k + 3, box.y + 37)
+  await page.mouse.move(box.x + (startBar - 1) * bar * k + 3, box.y + CHORD_Y)
+  if (shift) await page.keyboard.down('Shift')
   await page.mouse.down()
-  await page.mouse.move(box.x + (endBar - 1) * bar * k - 1, box.y + 37, { steps: 4 })
+  await page.mouse.move(box.x + (endBar - 1) * bar * k - 1, box.y + CHORD_Y, { steps: 4 })
   await page.mouse.up()
+  if (shift) await page.keyboard.up('Shift')
   await page.locator('[data-testid=chord-editor]').waitFor()
 }
 async function manualChord(root, typeLabel, bass = '') {
@@ -468,11 +473,11 @@ await run('CH-04', async () => {
   const sus = await manualChord('C', '挂四')
   const events = (await project()).chordTrack
   // Drag the right edge of the first chord from bar 2 to bar 2.3 (resize).
-  await page.locator('.timeline-scroll').evaluate((el) => { el.scrollLeft = 0 })
+  await page.locator('.arrange-scroll').evaluate((el) => { el.scrollLeft = 0 })
   const svg = await page.locator('.tl-head-svg').boundingBox()
   const k = 56 / 960
-  await page.mouse.move(svg.x + 3840 * k - 2, svg.y + 37)
-  await page.mouse.down(); await page.mouse.move(svg.x + (3840 + 960) * k, svg.y + 37, { steps: 5 }); await page.mouse.up()
+  await page.mouse.move(svg.x + 3840 * k - 2, svg.y + CHORD_Y)
+  await page.mouse.down(); await page.mouse.move(svg.x + (3840 + 960) * k, svg.y + CHORD_Y, { steps: 5 }); await page.mouse.up()
   const resized = (await project()).chordTrack.map((e) => [e.startTick, e.durationTick])
   const byStart = Object.fromEntries(events.map((e) => [e.startTick, e.chord]))
   await shot('ch04-manual-chords-1280')
@@ -782,6 +787,272 @@ await run('EXTRA', async () => {
   const current = await flux(() => window.__flux.engine.soundbank.id)
   check('A-06:soundbank-relocate-prompt', /Other-GM\.sf2/.test(banner) && /重新定位/.test(banner) && after.tracks.every((t) => t.soundbankId === current)
     && (await page.locator('.banner-warn').count()) === 0, { banner: banner.slice(0, 160), switchedTo: current })
+})
+
+// --- Follow-up items (2026-09-28): Space, box select, note preview, playhead bar, chord track →
+// MIDI, multi-track rows, export names, closable piano roll, English UI. ------------------------
+const state = () => flux(() => ({ transport: window.__flux.transport, playhead: window.__flux.playhead,
+  selectedTrackId: window.__flux.selectedTrackId, selection: window.__flux.selectedNoteIds }))
+
+await run('F-01', async () => {
+  await newProject()
+  await importFile('ch05_c_g_am_f.mid')
+  await page.locator('.brand').click()
+  await page.keyboard.press('Space'); await sleep(400)
+  const s1 = await state()
+  await page.keyboard.press('Space'); await sleep(150)
+  const s2 = await state()
+  // A focused button must not also be clicked by Space.
+  const met = page.getByRole('button', { name: '节拍器' })
+  const metBefore = await met.getAttribute('aria-pressed')
+  await met.focus(); await page.keyboard.press('Space'); await sleep(300)
+  const s3 = await state()
+  const metAfter = await met.getAttribute('aria-pressed')
+  await page.keyboard.press('Space'); await sleep(150)
+  // Typing in a text field keeps its space.
+  await page.getByLabel('速度（四分音符 BPM）').focus(); await page.keyboard.press('Space'); await sleep(200)
+  const s4 = await state()
+  await page.locator('.brand').click()
+  // While recording, Space stops (the record button keeps focus; its click must not restart recording).
+  await btn('回到开头').click()
+  await btn('录音').click(); await sleep(600)
+  const s5 = await state()
+  await page.keyboard.press('Space'); await sleep(400)
+  const s6 = await state()
+  check('F-01:space-play-pause-stop', s1.transport === 'playing' && s2.transport === 'stopped' && s2.playhead > 0
+    && s3.transport === 'playing' && metBefore === metAfter && s4.transport === 'stopped' && s5.transport === 'recording' && s6.transport === 'stopped',
+  { transports: [s1, s2, s3, s4, s5, s6].map((s) => s.transport), pausedAt: s2.playhead, metronomeUnchanged: metBefore === metAfter })
+  await btn('回到开头').click()
+})
+
+await run('F-02', async () => {
+  await newProject()
+  await importFile('ch05_c_g_am_f.mid')
+  const note = (pitch, start) => page.locator(`[data-testid=note][data-pitch="${pitch}"][data-start="${start}"]`)
+  await note(72, 0).scrollIntoViewIfNeeded()
+  const top1 = await note(72, 0).boundingBox(), low1 = await note(64, 0).boundingBox()
+  // Rubber band from empty space above bar 1's top note down to its E4: selects 72, 67, 64.
+  await page.mouse.move(top1.x + 10, top1.y - 6); await page.mouse.down()
+  await page.mouse.move(top1.x + top1.width - 10, low1.y + low1.height + 3, { steps: 5 })
+  const bandVisible = await page.locator('[data-testid=marquee]').count()
+  await page.mouse.up()
+  const sel1 = (await state()).selection.length
+  // Shift adds bar 2's top notes (71, 67, 62).
+  const top2 = await note(71, 3840).boundingBox(), low2 = await note(62, 3840).boundingBox()
+  await page.keyboard.down('Shift')
+  await page.mouse.move(top2.x + 10, top2.y - 6); await page.mouse.down()
+  await page.mouse.move(top2.x + top2.width - 10, low2.y + low2.height + 3, { steps: 5 }); await page.mouse.up()
+  await page.keyboard.up('Shift')
+  const sel2 = await state()
+  const p0 = await project()
+  const picked = p0.tracks[0].clips[0].notes.filter((n) => sel2.selection.includes(n.id)).map((n) => [n.pitch, n.startTick]).sort((a, b) => a[1] - b[1] || a[0] - b[0])
+  // Dragging one selected note moves the whole selection one bar later; undo restores it.
+  const k = 56 / 960
+  const grab = await note(72, 0).boundingBox()
+  await page.mouse.move(grab.x + 20, grab.y + grab.height / 2); await page.mouse.down()
+  await page.mouse.move(grab.x + 20 + 3840 * k, grab.y + grab.height / 2, { steps: 6 }); await page.mouse.up()
+  const moved = (await project()).tracks[0].clips[0].notes.filter((n) => sel2.selection.includes(n.id)).map((n) => n.startTick)
+  await btn('撤销').click()
+  const restored = JSON.stringify((await project()).tracks[0].clips[0].notes) === JSON.stringify(p0.tracks[0].clips[0].notes)
+  // Delete removes the selection in one undoable step.
+  await page.locator('.brand').click(); await page.keyboard.press('Delete')
+  const afterDelete = (await project()).tracks[0].clips[0].notes.length
+  await btn('撤销').click()
+  const afterUndo = (await project()).tracks[0].clips[0].notes.length
+  check('F-02:box-select', bandVisible === 1 && sel1 === 3 && JSON.stringify(picked) === '[[64,0],[67,0],[72,0],[62,3840],[67,3840],[71,3840]]'
+    && moved.filter((t) => t === 3840).length === 3 && moved.filter((t) => t === 7680).length === 3
+    && restored && afterDelete === 10 && afterUndo === 16,
+  { bandVisible, firstBand: sel1, withShift: picked, movedStarts: moved, undoRestored: restored, afterDelete, afterUndo })
+})
+
+await run('F-03', async () => {
+  await newProject()
+  await importFile('ch05_c_g_am_f.mid')
+  await sleep(1500)
+  const quiet = await level()
+  const rev = (await project()).revision
+  const n = page.locator('[data-testid=note][data-pitch="48"][data-start="0"]')
+  await n.scrollIntoViewIfNeeded()
+  const box = await n.boundingBox()
+  await page.mouse.click(box.x + 20, box.y + box.height / 2)
+  const heard = await peakLevel(250)
+  const unchanged = (await project()).revision === rev
+  // Dragging the note two rows up auditions each new pitch with the track's instrument.
+  await flux(() => {
+    const { engine } = window.__flux
+    window.__previews = []
+    const preview = engine.preview.bind(engine)
+    engine.preview = (pitches, inst, s) => { window.__previews.push({ pitches, program: inst.program }); return preview(pitches, inst, s) }
+  })
+  await page.mouse.move(box.x + 20, box.y + box.height / 2); await page.mouse.down()
+  await page.mouse.move(box.x + 20, box.y + box.height / 2 - 24, { steps: 4 }); await page.mouse.up()
+  const previews = await flux(() => window.__previews)
+  const program = (await project()).tracks[0].program
+  check('F-03:click-note-preview', quiet < 1e-4 && heard > 1e-4 && unchanged
+    && JSON.stringify(previews.map((x) => x.pitches[0])) === '[48,49,50]' && previews.every((x) => x.program === program),
+  { levelBefore: quiet, levelAfterClick: heard, projectUnchangedByClick: unchanged, dragPreviews: previews })
+})
+
+await run('F-04', async () => {
+  await newProject()
+  await importFile('ch05_c_g_am_f.mid')
+  const k = 56 / 960
+  await page.locator('.arrange-scroll').evaluate((el) => { el.scrollLeft = 0 })
+  const svg = await page.locator('.tl-head-svg').boundingBox()
+  const loop0 = JSON.stringify((await project()).loopRange)
+  await page.mouse.click(svg.x + 7680 * k + 2, svg.y + PLAYBAR_Y)
+  const click = (await state()).playhead
+  await page.mouse.move(svg.x + 3840 * k + 2, svg.y + PLAYBAR_Y); await page.mouse.down()
+  await page.mouse.move(svg.x + 11520 * k + 2, svg.y + PLAYBAR_Y, { steps: 5 })
+  await sleep(100)
+  const whileDragging = (await state()).playhead
+  await page.mouse.up()
+  const loopAfterScrub = JSON.stringify((await project()).loopRange)
+  // The bar ruler no longer locates; a click there changes nothing, a drag sets only the loop.
+  await page.mouse.click(svg.x + 15360 * k + 2, svg.y + 10)
+  const afterRulerClick = (await state()).playhead
+  await page.mouse.move(svg.x + 3840 * k + 2, svg.y + 10); await page.mouse.down()
+  await page.mouse.move(svg.x + 11520 * k + 2, svg.y + 10, { steps: 5 }); await page.mouse.up()
+  const loop = (await project()).loopRange
+  const afterRulerDrag = (await state()).playhead
+  // During playback the playhead bar re-starts playback where it is released.
+  await btn('播放').click(); await sleep(300)
+  await page.mouse.move(svg.x + 3840 * k + 2, svg.y + PLAYBAR_Y); await page.mouse.down()
+  await page.mouse.move(svg.x + 7680 * k + 2, svg.y + PLAYBAR_Y, { steps: 3 }); await page.mouse.up()
+  await sleep(600)
+  const playingAt = await flux(() => window.__flux.engine.positionTick())
+  await btn('停止').click()
+  check('F-04:playhead-bar-separate-from-loop', click === 7680 && whileDragging === 11520 && loopAfterScrub === loop0
+    && afterRulerClick === 11520 && afterRulerDrag === 11520 && loop.startTick === 3840 && loop.endTick === 11520 && loop.enabled
+    && playingAt >= 7680 && playingAt < 7680 + 3840,
+  { click, whileDragging, loopUnchangedByScrub: loopAfterScrub === loop0, afterRulerClick, afterRulerDrag, loop, playingAtAfterScrub: playingAt })
+})
+
+await run('F-05', async () => {
+  await newProject()
+  await importFile('ch05_c_g_am_f.mid')
+  await btn('采用全部建议（4）').click()
+  const p0 = await project()
+  await page.locator('[data-testid=chords-to-midi]').click()
+  await sleep(100)
+  const p1 = await project()
+  const added = p1.tracks[1]
+  const notes = (t) => t.clips[0].notes.map((n) => [n.pitch, n.startTick, n.durationTick]).sort((a, b) => a[1] - b[1] || a[0] - b[0])
+  const want = [[48, 0], [60, 0], [64, 0], [67, 0], [55, 3840], [67, 3840], [71, 3840], [74, 3840],
+    [57, 7680], [69, 7680], [72, 7680], [76, 7680], [53, 11520], [65, 11520], [69, 11520], [72, 11520]].map(([p, s]) => [p, s, 3840])
+  const selected = (await state()).selectedTrackId === added?.id
+  await btn('撤销').click()
+  const undone = (await project()).tracks.length
+  const chordsBefore = JSON.stringify((await project()).chordTrack)
+  await openEditorRange(2, 4, { shift: true })
+  const label = await page.locator('[data-testid=chords-to-midi]').textContent()
+  await page.locator('[data-testid=chords-to-midi]').click()
+  const ranged = (await project()).tracks[1]
+  await page.locator('[data-testid=chord-editor]').getByRole('button', { name: '取消' }).click()
+  await btn('撤销').click()
+  // A selected chord is also a range: the third chord alone.
+  await page.locator('[data-testid=chord-event]').nth(2).click({ position: { x: 20, y: 10 } })
+  const eventLabel = await page.locator('[data-testid=chords-to-midi]').textContent()
+  await page.locator('[data-testid=chords-to-midi]').click()
+  const single = (await project()).tracks[1]
+  const chordsAfter = JSON.stringify((await project()).chordTrack)
+  check('F-05:chord-track-to-midi', p1.tracks.length === 2 && JSON.stringify(notes(added)) === JSON.stringify(want) && selected
+    && JSON.stringify(p1.chordTrack) === JSON.stringify(p0.chordTrack) && undone === 1 && /选区/.test(label)
+    && JSON.stringify(notes(ranged)) === JSON.stringify(want.slice(4, 12)) && /3\.1–4\.1/.test(eventLabel)
+    && JSON.stringify(notes(single)) === JSON.stringify(want.slice(8, 12)) && chordsAfter === chordsBefore,
+  { addedTrack: added?.name, notes: notes(added).length, chordTrackUnchanged: JSON.stringify(p1.chordTrack) === JSON.stringify(p0.chordTrack) && chordsAfter === chordsBefore,
+    undoRemoves: undone === 1, rangeLabel: label, rangeNotes: notes(ranged), eventLabel, eventNotes: notes(single) })
+})
+
+await run('F-07', async () => {
+  await newProject()
+  await importFile('a02_same_program.mid')
+  const p = await project()
+  const rows = await page.locator('.track-heads .track').count()
+  const clips = await page.locator('[data-testid=clip]').count()
+  const controls = await page.locator('.track-heads .track').evaluateAll((els) => els.map((e) => ['.m', '.s', '.r'].every((c) => e.querySelector(c))))
+  await page.locator('[data-testid=clip]').nth(2).click({ position: { x: 30, y: 30 } })
+  const sel = (await state()).selectedTrackId
+  const rollNotes = await page.locator('[data-testid=note]').count()
+  await page.locator('.arrange-scroll').evaluate((el) => { el.scrollLeft = 150 })
+  await sleep(150)
+  const xs = await flux(() => ['.tl-head-svg', '.lanes', 'svg.roll'].map((s) => document.querySelector(s).getBoundingClientRect().x))
+  const editorScroll = await page.locator('.timeline-scroll').evaluate((el) => el.scrollLeft)
+  await shot('f07-multitrack-1280')
+  check('F-07:multitrack-rows', rows === 4 && clips === 4 && controls.every(Boolean) && sel === p.tracks[2].id
+    && rollNotes === p.tracks[2].clips[0].notes.length && editorScroll === 150 && Math.max(...xs) - Math.min(...xs) < 0.5,
+  { rows, clips, msrPerRow: controls, selectedThird: sel === p.tracks[2].id, rollNotes, editorScrollFollows: editorScroll, laneX: xs })
+  await page.locator('.arrange-scroll').evaluate((el) => { el.scrollLeft = 0 })
+})
+
+await run('F-08', async () => {
+  await newProject()
+  await importFile('ch05_c_g_am_f.mid')
+  const names = []
+  for (const label of ['保存项目', '保存项目', '导出 MIDI', '导出 MIDI']) {
+    const [d] = await Promise.all([page.waitForEvent('download'), btn(label).click()])
+    names.push(d.suggestedFilename())
+    await d.cancel?.()
+  }
+  check('F-08:export-names-unique', new Set(names).size === 4 && names.slice(0, 2).every((n) => /^ch05_c_g_am_f-\d{8}-\d{6}(-\d+)?\.flux\.json$/.test(n))
+    && names.slice(2).every((n) => /^ch05_c_g_am_f-\d{8}-\d{6}(-\d+)?\.mid$/.test(n)), names)
+})
+
+await run('F-09', async () => {
+  await newProject()
+  await importFile('a02_same_program.mid')
+  const p = await project()
+  const heightOpen = (await page.locator('.arrange-scroll').boundingBox()).height
+  await page.locator('[data-testid=note]').first().click()
+  const selectedBefore = (await state()).selection.length
+  await page.locator('[data-testid=roll-toggle]').click()
+  const rollWhenClosed = await page.locator('.timeline-scroll').count()
+  const heightClosed = (await page.locator('.arrange-scroll').boundingBox()).height
+  const selectedAfter = (await state()).selection.length
+  await shot('f09-roll-closed-1280')
+  // Playback with the roll hidden keeps working.
+  await btn('播放').click(); await sleep(500)
+  const playing = (await state()).transport
+  await btn('停止').click()
+  // Double-clicking the third track's clip opens the roll on that track (as in Logic).
+  await page.locator('[data-testid=clip]').nth(2).dblclick({ position: { x: 30, y: 30 } })
+  const reopened = await page.locator('.timeline-scroll').count()
+  const sel = (await state()).selectedTrackId
+  const rollNotes = await page.locator('[data-testid=note]').count()
+  await page.locator('[data-testid=roll-toggle]').click()
+  await page.locator('[data-testid=roll-toggle]').click()
+  const toggledBack = await page.locator('.timeline-scroll').count()
+  check('F-09:piano-roll-closable', rollWhenClosed === 0 && heightClosed > heightOpen && selectedBefore === 1 && selectedAfter === 0
+    && playing === 'playing' && reopened === 1 && sel === p.tracks[2].id && rollNotes === p.tracks[2].clips[0].notes.length && toggledBack === 1,
+  { rollWhenClosed, arrangeHeight: [heightOpen, heightClosed], selection: [selectedBefore, selectedAfter], playing, reopened,
+    reopenedOnThird: sel === p.tracks[2].id, rollNotes, toggledBack })
+})
+
+await run('F-06', async () => {
+  await newProject()
+  await page.getByLabel('界面语言').selectOption('en')
+  await btn('New').click(); await sleep(100)
+  await page.getByRole('button', { name: /^Computer keyboard/ }).click()
+  await page.locator('.brand').click()
+  const text = await flux(() => document.body.innerText)
+  const cjk = text.replace(/中文/g, '').match(/[㐀-鿿＀-￯　-〿]/g) ?? []
+  const p = await project()
+  await shot('f06-english-1280')
+  await importFile('a06_complex.mid')
+  const modal = await page.locator('dialog.modal').textContent()
+  await page.locator('dialog.modal').getByRole('button', { name: 'Cancel' }).click()
+  await page.reload()
+  await sleep(300)
+  const kept = await page.getByLabel('Interface language').inputValue()
+  const enableButton = await btn('Enable sound').count()
+  const htmlLang = await flux(() => document.documentElement.lang)
+  await page.getByLabel('Interface language').selectOption('zh')
+  await boot()
+  await spyNotes()
+  check('F-06:english-ui', !cjk.length && p.name === 'Untitled project' && p.tracks[0].name === 'Melody 1'
+    && /Sustain pedal CC64 ×1 \(not imported\)/.test(modal) && /Pitch bend/.test(modal) && /tempo change/.test(modal) && /Source PPQ 384/.test(modal)
+    && kept === 'en' && enableButton === 1 && htmlLang === 'en',
+  { cjkLeft: cjk.join(''), newProject: [p.name, p.tracks[0].name], importLimits: modal.slice(0, 300), keptAfterReload: kept, htmlLang })
 })
 
 await run('PERF-CHORD', async () => {

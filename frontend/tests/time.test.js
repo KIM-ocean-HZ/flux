@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  accentAt, formatPosition, isValidBpm, isValidTimeSignature, noteValueTicks, parsePosition, PPQ, pulse,
+  accentAt, countInPulses, formatPosition, isValidBpm, isValidTimeSignature, noteValueTicks, parsePosition, PPQ, pulse,
   pulsesBetween, secondsToTicks, ticksPerBar, ticksToSeconds,
 } from '../src/music/time.js'
 
@@ -46,7 +46,8 @@ describe('tick / second / bar conversion (A-04)', () => {
     expect(parsePosition('3.2', ts(3, 4))).toBe(2880 * 2 + 960)
     expect(parsePosition('2', ts(6, 8))).toBe(2880)
     expect(parsePosition('1.4', ts(3, 4))).toBeNull()
-    expect(formatPosition(-500, ts(4, 4))).toMatch(/倒数/)
+    expect(countInPulses(-500, ts(4, 4))).toBe(1)
+    expect(countInPulses(-1921, ts(4, 4))).toBe(3)
   })
 
   it('validates the supported BPM and meter ranges', () => {

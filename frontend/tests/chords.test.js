@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { translate } from '../src/i18n/translate.js'
 import {
   bassOptions, CHORD_TYPES, chordSymbol, chordToneSpellings, chordType, detectChord, makeChord, notesSignature,
   segmentChords, spellingPc, validateChord, voiceChord,
@@ -58,8 +59,8 @@ describe('chord dictionary (CH-04)', () => {
 
   it('validates structured chords instead of trusting a symbol', () => {
     expect(validateChord(makeChord('F#', 'm7', 'E'))).toBeNull()
-    expect(validateChord({ ...makeChord('C', 'maj'), rootSpelling: 'D' })).toMatch(/不一致/)
-    expect(validateChord({ ...makeChord('C', 'maj'), quality: 'maj', additions: ['add13'] })).toMatch(/不支持/)
+    expect(translate('zh', validateChord({ ...makeChord('C', 'maj'), rootSpelling: 'D' }))).toMatch(/不一致/)
+    expect(translate('zh', validateChord({ ...makeChord('C', 'maj'), quality: 'maj', additions: ['add13'] }))).toMatch(/不支持/)
     expect(validateChord({ ...makeChord('C', 'maj'), bassPc: 4, bassSpelling: 'Fb' })).toBeNull()
     expect(chordType(makeChord('C', 'madd9')).id).toBe('madd9')
   })
@@ -98,10 +99,11 @@ describe('simultaneous-note detection (CH-01, CH-03)', () => {
     expect(detectChord([60, 72]).status).toBe('undetermined')
     const dyad = detectChord([60, 64])
     expect(dyad.status).toBe('undetermined')
-    expect(dyad.reason).toMatch(/大三度/)
+    expect(translate('zh', dyad.reason)).toMatch(/大三度/)
+    expect(translate('en', dyad.reason)).toBe('Interval C4–E4 (major 3rd)')
     const dim7 = detectChord([60, 63, 66, 69])
     expect(dim7.status).toBe('unsupported')
-    expect(dim7.reason).toMatch(/不在首版和弦字典/)
+    expect(translate('zh', dim7.reason)).toMatch(/不在首版和弦字典/)
     expect(detectChord([60, 64, 67, 71, 74]).status).toBe('unsupported') // Cmaj9 is not silently a triad
   })
 

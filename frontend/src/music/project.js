@@ -1,7 +1,8 @@
 // Serializable project model (DAW_SPEC §8) and pure edit operations. Every musical edit
 // returns a new project; the history layer bumps `revision`.
 
-import { validateChord } from './chords.js'
+import { m, translate } from '../i18n/translate.js'
+import { validateChord, voiceChord } from './chords.js'
 import { isValidBpm, isValidTimeSignature, PPQ, ticksPerBar } from './time.js'
 
 export const SCHEMA_VERSION = 1
@@ -17,12 +18,13 @@ export function createTrack({ name, program = 0, isDrum = false, role = 'melody'
   }
 }
 
-export function createProject() {
+/** Default names are written in the interface language at creation time (they are data). */
+export function createProject(lang = 'zh') {
   const timeSignature = { numerator: 4, denominator: 4 }
   return {
-    id: newId('prj'), schemaVersion: SCHEMA_VERSION, revision: 0, name: '未命名项目', ppq: PPQ,
+    id: newId('prj'), schemaVersion: SCHEMA_VERSION, revision: 0, name: translate(lang, 'project.untitled'), ppq: PPQ,
     quarterBpm: 120, timeSignature, loopRange: { startTick: 0, endTick: ticksPerBar(timeSignature) * 4, enabled: false },
-    keyContext: null, chordTrack: [], tracks: [createTrack({ name: '旋律 1' })], generations: [], soundbanks: [],
+    keyContext: null, chordTrack: [], tracks: [createTrack({ name: translate(lang, 'project.firstTrack') })], generations: [], soundbanks: [],
   }
 }
 
@@ -30,9 +32,9 @@ export function createProject() {
 const TWINKLE = [[60, 0, 1], [60, 1, 1], [67, 2, 1], [67, 3, 1], [69, 4, 1], [69, 5, 1], [67, 6, 2],
   [65, 8, 1], [65, 9, 1], [64, 10, 1], [64, 11, 1], [62, 12, 1], [62, 13, 1], [60, 14, 2]]
 
-export function createExampleProject() {
-  const project = createProject()
-  project.name = '示例：小星星'
+export function createExampleProject(lang = 'zh') {
+  const project = createProject(lang)
+  project.name = translate(lang, 'project.example')
   return addNotes(project, project.tracks[0].id, TWINKLE.map(([pitch, beat, beats]) => ({
     pitch, startTick: beat * PPQ, durationTick: beats * PPQ, velocity: 80,
   })))
@@ -54,11 +56,11 @@ export function audibleTrackIds(tracks) {
 // --- Project settings ------------------------------------------------------------------
 
 export const setTempo = (p, quarterBpm) => {
-  if (!isValidBpm(quarterBpm)) throw new Error(`速度须在 20–300 BPM 之间：${quarterBpm}`)
+  if (!isValidBpm(quarterBpm)) throw new Error(`tempo must be 20–300 BPM: ${quarterBpm}`)
   return { ...p, quarterBpm }
 }
 export const setTimeSignature = (p, timeSignature) => {
-  if (!isValidTimeSignature(timeSignature)) throw new Error('拍号超出支持范围')
+  if (!isValidTimeSignature(timeSignature)) throw new Error('unsupported time signature')
   return { ...p, timeSignature: { ...timeSignature } }
 }
 export const setKeyContext = (p, keyContext) => ({ ...p, keyContext: keyContext ? { ...keyContext } : null })
@@ -164,77 +166,95 @@ export function copyChord(p, id, startTick) {
   return placeChord(p, { ...rest, startTick })
 }
 
+/**
+ * Block chords for the confirmed chord events inside [startTick, endTick): the dictionary
+ * voicing (slash bass included), clipped to the range. N.C. and gaps give no notes; the
+ * chord track itself is left unchanged.
+ */
+export function chordTrackNotes(chordTrack, { startTick = 0, endTick = Infinity, velocity = 80 } = {}) {
+  const notes = []
+  for (const e of chordTrack) {
+    if (e.status !== 'confirmed' || e.kind !== 'chord') continue
+    const a = Math.max(e.startTick, startTick)
+    const b = Math.min(e.startTick + e.durationTick, endTick)
+    if (b <= a) continue
+    for (const pitch of voiceChord(e.chord)) notes.push({ pitch, startTick: a, durationTick: b - a, velocity })
+  }
+  return notes
+}
+
 // --- Validation and serialization ------------------------------------------------------
 
 const isInt = (v, min, max) => Number.isInteger(v) && v >= min && (max === undefined || v <= max)
 
 /**
- * Validate an opened project file. Returns { ok: true, project } or { ok: false, errors }.
- * Unknown top-level fields are dropped; missing optional fields get defaults.
+ * Validate an opened project file. Returns { ok: true, project } or { ok: false, errors }
+ * (error message descriptors). Unknown top-level fields are dropped; missing optional fields
+ * get defaults.
  */
-export function validateProject(data) {
+export function validateProject(data, lang = 'zh') {
   const errors = []
-  const err = (m) => errors.push(m)
-  if (!data || typeof data !== 'object' || Array.isArray(data)) return { ok: false, errors: ['文件内容不是 FLUX 项目对象'] }
-  if (data.schemaVersion !== SCHEMA_VERSION) err(`不支持的 schemaVersion：${data.schemaVersion}（需要 ${SCHEMA_VERSION}）`)
-  if (data.ppq !== PPQ) err(`ppq 须为 ${PPQ}，文件为 ${data.ppq}`)
-  if (!isValidBpm(data.quarterBpm)) err(`quarterBpm 须在 20–300：${data.quarterBpm}`)
-  if (!isValidTimeSignature(data.timeSignature)) err('timeSignature 无效（分子 1–12，分母 2/4/8/16）')
-  if (!Array.isArray(data.tracks) || !data.tracks.length) err('tracks 须为非空数组')
+  const err = (key, params) => errors.push(m(key, params))
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return { ok: false, errors: [m('project.err.notObject')] }
+  if (data.schemaVersion !== SCHEMA_VERSION) err('project.err.schema', { got: String(data.schemaVersion), want: SCHEMA_VERSION })
+  if (data.ppq !== PPQ) err('project.err.ppq', { want: PPQ, got: String(data.ppq) })
+  if (!isValidBpm(data.quarterBpm)) err('project.err.bpm', { got: String(data.quarterBpm) })
+  if (!isValidTimeSignature(data.timeSignature)) err('project.err.ts')
+  if (!Array.isArray(data.tracks) || !data.tracks.length) err('project.err.tracks')
   const ids = new Set()
-  const unique = (id, where) => {
-    if (typeof id !== 'string' || !id) err(`${where} 缺少 id`)
-    else if (ids.has(id)) err(`重复 id：${id}`)
+  const unique = (id, at) => {
+    if (typeof id !== 'string' || !id) err('project.err.noId', { at })
+    else if (ids.has(id)) err('project.err.dupId', { id })
     else ids.add(id)
   }
   for (const [ti, t] of (Array.isArray(data.tracks) ? data.tracks : []).entries()) {
     const at = `tracks[${ti}]`
     unique(t?.id, at)
-    if (typeof t?.name !== 'string') err(`${at}.name 须为字符串`)
-    if (!isInt(t?.program, 0, 127)) err(`${at}.program 须为 0–127 的整数`)
-    if (typeof t?.isDrum !== 'boolean') err(`${at}.isDrum 须为布尔值`)
-    if (t?.volume !== undefined && !isInt(t.volume, 0, 127)) err(`${at}.volume 须为 0–127`)
-    if (!Array.isArray(t?.clips) || t.clips.length !== 1) { err(`${at}.clips 须恰有一个片段（阶段 A）`); continue }
+    if (typeof t?.name !== 'string') err('project.err.trackName', { at })
+    if (!isInt(t?.program, 0, 127)) err('project.err.program', { at })
+    if (typeof t?.isDrum !== 'boolean') err('project.err.isDrum', { at })
+    if (t?.volume !== undefined && !isInt(t.volume, 0, 127)) err('project.err.volume', { at })
+    if (!Array.isArray(t?.clips) || t.clips.length !== 1) { err('project.err.clips', { at }); continue }
     const clip = t.clips[0]
     unique(clip?.id, `${at}.clips[0]`)
-    if (!isInt(clip?.startTick, 0)) err(`${at}.clips[0].startTick 须为非负整数`)
-    if (!Array.isArray(clip?.notes)) { err(`${at}.clips[0].notes 须为数组`); continue }
+    if (!isInt(clip?.startTick, 0)) err('project.err.clipStart', { at })
+    if (!Array.isArray(clip?.notes)) { err('project.err.notes', { at }); continue }
     for (const [ni, n] of clip.notes.entries()) {
       const an = `${at}.notes[${ni}]`
       unique(n?.id, an)
-      if (!isInt(n?.pitch, 0, 127)) err(`${an}.pitch 须为 0–127 的整数`)
-      if (!isInt(n?.startTick, 0)) err(`${an}.startTick 须为非负整数`)
-      if (!isInt(n?.durationTick, 1)) err(`${an}.durationTick 须为正整数`)
-      if (!isInt(n?.velocity, 1, 127)) err(`${an}.velocity 须为 1–127`)
+      if (!isInt(n?.pitch, 0, 127)) err('project.err.pitch', { at: an })
+      if (!isInt(n?.startTick, 0)) err('project.err.noteStart', { at: an })
+      if (!isInt(n?.durationTick, 1)) err('project.err.noteDuration', { at: an })
+      if (!isInt(n?.velocity, 1, 127)) err('project.err.velocity', { at: an })
     }
   }
-  const chords = Array.isArray(data.chordTrack) ? data.chordTrack : (err('chordTrack 须为数组'), [])
+  const chords = Array.isArray(data.chordTrack) ? data.chordTrack : (err('project.err.chordTrack'), [])
   const sorted = [...chords].sort((a, b) => a.startTick - b.startTick)
   for (const [ci, e] of sorted.entries()) {
-    const ac = `chordTrack[${chords.indexOf(e)}]`
-    unique(e?.id, ac)
-    if (!isInt(e?.startTick, 0) || !isInt(e?.durationTick, 1)) err(`${ac} 起点／时长须为整数 tick`)
+    const at = `chordTrack[${chords.indexOf(e)}]`
+    unique(e?.id, at)
+    if (!isInt(e?.startTick, 0) || !isInt(e?.durationTick, 1)) err('project.err.chordTime', { at })
     if (e?.kind === 'chord') {
       const msg = validateChord(e.chord)
-      if (msg) err(`${ac}: ${msg}`)
+      if (msg) err('project.err.chord', { at, msg })
     } else if (e?.kind === 'no_chord') {
-      if (e.chord != null) err(`${ac}: N.C. 不应带 chord 字段`)
-    } else err(`${ac}.kind 须为 chord 或 no_chord`)
-    if (!['manual', 'midi_detected', 'harmonized'].includes(e?.source)) err(`${ac}.source 无效`)
-    if (!['suggested', 'confirmed'].includes(e?.status)) err(`${ac}.status 无效`)
-    if (ci > 0 && sorted[ci - 1].startTick + sorted[ci - 1].durationTick > e?.startTick) err(`${ac} 与前一个和弦事件重叠`)
+      if (e.chord != null) err('project.err.ncChord', { at })
+    } else err('project.err.kind', { at })
+    if (!['manual', 'midi_detected', 'harmonized'].includes(e?.source)) err('project.err.source', { at })
+    if (!['suggested', 'confirmed'].includes(e?.status)) err('project.err.status', { at })
+    if (ci > 0 && sorted[ci - 1].startTick + sorted[ci - 1].durationTick > e?.startTick) err('project.err.overlap', { at })
   }
   const k = data.keyContext
   if (k != null && (!isInt(k.tonicPc, 0, 11) || !['major', 'minor'].includes(k.mode)
     || typeof k.tonicSpelling !== 'string' || !['user', 'inferred'].includes(k.source)
-    || !['suggested', 'confirmed'].includes(k.status))) err('keyContext 无效')
+    || !['suggested', 'confirmed'].includes(k.status))) err('project.err.key')
   const loop = data.loopRange
-  if (loop && (!isInt(loop.startTick, 0) || !isInt(loop.endTick, 1) || loop.endTick <= loop.startTick)) err('loopRange 无效')
+  if (loop && (!isInt(loop.startTick, 0) || !isInt(loop.endTick, 1) || loop.endTick <= loop.startTick)) err('project.err.loop')
   if (errors.length) return { ok: false, errors }
 
   const project = {
     id: typeof data.id === 'string' ? data.id : newId('prj'), schemaVersion: SCHEMA_VERSION,
-    revision: isInt(data.revision, 0) ? data.revision : 0, name: typeof data.name === 'string' ? data.name : '未命名项目',
+    revision: isInt(data.revision, 0) ? data.revision : 0, name: typeof data.name === 'string' ? data.name : translate(lang, 'project.untitled'),
     ppq: PPQ, quarterBpm: data.quarterBpm, timeSignature: { numerator: data.timeSignature.numerator, denominator: data.timeSignature.denominator },
     loopRange: loop ? { startTick: loop.startTick, endTick: loop.endTick, enabled: !!loop.enabled }
       : { startTick: 0, endTick: ticksPerBar(data.timeSignature) * 4, enabled: false },
@@ -253,12 +273,12 @@ export function validateProject(data) {
 
 export const serializeProject = (p) => JSON.stringify(p, null, 2)
 
-export function parseProjectFile(text) {
+export function parseProjectFile(text, lang = 'zh') {
   let data
   try {
     data = JSON.parse(text)
   } catch (e) {
-    return { ok: false, errors: [`不是有效的 JSON：${e.message}`] }
+    return { ok: false, errors: [m('project.err.json', { msg: e.message })] }
   }
-  return validateProject(data)
+  return validateProject(data, lang)
 }

@@ -5,6 +5,7 @@
 
 import { WorkletSynthesizer } from 'spessasynth_lib'
 import processorUrl from 'spessasynth_lib/dist/spessasynth_processor.min.js?url'
+import { m } from '../i18n/translate.js'
 import { audibleTrackIds, trackNotes } from '../music/project.js'
 import { PPQ, ticksPerBar } from '../music/time.js'
 import { record } from './perf.js'
@@ -35,7 +36,7 @@ export function isSoundbankHeader(buffer) {
 export class AudioEngine {
   constructor() {
     this.status = 'off' // off | starting | needs-soundbank | loading | ready | error
-    this.error = null
+    this.error = null // message descriptor
     this.soundbank = null // { id, name, byteLength, sha256 }
     this.coverage = null // { melodic: Set<program>, drumKit: boolean }
     this.listeners = new Set()
@@ -117,7 +118,7 @@ export class AudioEngine {
       const cached = await loadCachedSoundbank()
       if (cached) await this.loadSoundbank(cached.buffer, cached.name, { fromCache: true })
     } catch (err) {
-      this.setStatus('error', `无法启动音频：${err.message}`)
+      this.setStatus('error', m('audio.err.start', { msg: err.message }))
     }
   }
 
@@ -129,14 +130,14 @@ export class AudioEngine {
     if (!this.synth) return false
     const fallback = this.soundbank ? 'ready' : 'needs-soundbank'
     if (!isSoundbankHeader(buffer)) {
-      this.setStatus(fallback, `${name} 不是 SF2／SF3／DLS 音色文件`)
+      this.setStatus(fallback, m('audio.err.notSoundbank', { name }))
       return false
     }
     this.setStatus('loading')
     try {
       const sha256 = hex(await crypto.subtle.digest('SHA-256', buffer))
       await new Promise((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error('超时')), LOAD_TIMEOUT_MS)
+        const timer = setTimeout(() => reject(new Error(`timed out after ${LOAD_TIMEOUT_MS / 1000} s`)), LOAD_TIMEOUT_MS)
         this.synth.eventHandler.addEvent('soundBankError', 'flux-load', (e) => reject(new Error(String(e?.message ?? e))))
         this.synth.soundBankManager.addSoundBank(buffer.slice(0), 'main')
           .then(resolve, reject).finally(() => clearTimeout(timer))
@@ -149,7 +150,7 @@ export class AudioEngine {
       if (!fromCache) cacheSoundbank({ name, byteLength: buffer.byteLength, sha256, buffer })
       return true
     } catch (err) {
-      this.setStatus(fallback, `音源 ${name} 加载失败：${err.message}`)
+      this.setStatus(fallback, m('audio.err.load', { name, msg: err.message }))
       return false
     }
   }

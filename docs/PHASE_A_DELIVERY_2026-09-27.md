@@ -1,6 +1,6 @@
 # FLUX 阶段 A 交付记录：可听工作台与和弦输入
 
-日期：2026-09-27。状态：**DELIVERED / 待复核**，不是“已验收”。执行依据：[HANDOFF_A_2026-09-27](HANDOFF_A_2026-09-27.md)；产品行为以 [DAW_SPEC](DAW_SPEC_2026-09-26.md) 为准。B 阶段未开工。
+日期：2026-09-27。状态：**DELIVERED / 待复核**，不是“已验收”。2026-09-28 跟进：用户反馈的 11 项已处理，见 [跟进记录](PHASE_A_FOLLOWUP_2026-09-28.md)；Safari.app 人工测试由用户报告通过（第 7 节）。执行依据：[HANDOFF_A_2026-09-27](HANDOFF_A_2026-09-27.md)；产品行为以 [DAW_SPEC](DAW_SPEC_2026-09-26.md) 为准。B 阶段未开工。
 
 ## 1. 结论
 
@@ -12,7 +12,9 @@ A1–A3 已连续实现：浏览器里可以 **新建 → 启用声音并载入 
 2. **真实浏览器自动化**（Playwright 驱动本机 Google Chrome 153 与 Playwright WebKit 26.6，5173 与 8000 两个入口）：用真实键盘／鼠标事件操作页面，从 Web Audio 图中的 AnalyserNode 读电平。自动化运行的 Chrome 为 headless 并带 `--mute-audio`，所以证明的是音频图里确有信号，**不是扬声器里被听见**。
 3. **独立解析器**：Python mido 读回浏览器实际导出的 MIDI，并生成导入用夹具。
 
-**仍需人工完成（NOT RUN）：** 真人耳听（Chrome 与 Safari）；Safari.app 实机（本机 Safari 未开启“允许远程自动化”，safaridriver 拒绝建会话，WebKit 只是近似）；真人手指演奏四小节的手感与可感知延迟；用户实际键盘的多键冲突。第 12 节给出 10 分钟人工验收步骤。因此阶段 A 保持“待复核”。
+**Safari.app 实机：**用户按第 12 节第 7 步人工测试，2026-09-28 报告通过（本机 Safari 未开启“允许远程自动化”，自动化仍只能用 WebKit 近似）。
+
+**仍需人工完成（NOT RUN）：** Chrome 真人耳听；真人手指演奏四小节的手感与可感知延迟；用户实际键盘的多键冲突。第 12 节给出 10 分钟人工验收步骤。因此阶段 A 保持“待复核”。
 
 ## 2. 基线、改动与依赖
 
@@ -97,7 +99,7 @@ KeyContext tonicPc, tonicSpelling, mode: major|minor, source: user|inferred, sta
 
 | 编号 | 结果 | 证据与说明 |
 |---|---|---|
-| A-01 音源启用、失败恢复、完整 GM／鼓 | **自动化 PASS；Safari.app 与耳听 NOT RUN** | 目录 128＋鼓组断言（`gm.test.js`）；离线渲染 128 个 program 全部出声、12 个鼓件出声（`audio-render.test.js`）；浏览器中目录 129 行、8 个常用预设、搜索“贝斯”、试听电平、16 个家族各一个 program 与 3 个鼓件经电脑键盘发声（Chrome、WebKit × 5173/8000）。无效音源文件的报错与重试路径由代码实现，浏览器中未专门注入失败文件（见第 11 节） |
+| A-01 音源启用、失败恢复、完整 GM／鼓 | **自动化 PASS；Safari.app 用户人工通过（2026-09-28 报告）；Chrome 耳听 NOT RUN** | 目录 128＋鼓组断言（`gm.test.js`）；离线渲染 128 个 program 全部出声、12 个鼓件出声（`audio-render.test.js`）；浏览器中目录 129 行、8 个常用预设、搜索“贝斯”、试听电平、16 个家族各一个 program 与 3 个鼓件经电脑键盘发声（Chrome、WebKit × 5173/8000）。无效音源文件的报错与重试路径由代码实现，浏览器中未专门注入失败文件（见第 11 节） |
 | A-02 同音色双轨隔离、Mute/Solo、独立音量 | **自动化 PASS；耳听 NOT RUN** | 离线渲染：同 program 同音高两通道，一方 note-off／CC7=0／静音不影响另一方。浏览器：导入两条 program 0 轨（中央 C 重叠）＋两条鼓轨，分别接每轨通道的 AnalyserNode：A 结束后 B 电平仍约为 A 的 50 倍；A 音量 0 时 B 不变；Mute、多轨 Solo、Mute 优先均按规则为 0／非 0；停止后传输通道 voice 为 0。循环录音到尾自动停止并在循环尾关闭按住的音 |
 | A-03 试弹、录音、步进、焦点／悬挂音 | **自动化 PASS；真人演奏 NOT RUN** | jsdom 键盘测试 12 项（键位 A=60、重复键、修饰键、输入法、文本／BPM／搜索／下拉／可编辑／对话框不发声、换八度释放旧音、失焦全部释放、录音 take、步进分组）。浏览器：在轨名、BPM、音色搜索框里打字不发声；按住重复只起一个音；换八度与失焦后无按住的音、电平 < −80 dB；90 BPM 带一小节倒数录入 4 小节 16 个音并回放出声；步进 1/8 和弦一次写入同一起点、整组松开只前进一次、休止只前进；屏幕琴键可点击发声 |
 | A-04 tick／秒／小节、120→60 BPM、3/4 与 6/8 重音 | **PASS** | `time.test.js`、`scheduler.test.js`；浏览器中同一小节 120 BPM 调度时长 2.000000 s、60 BPM 4.000000 s；3/4 节拍器重音 bar-beat-beat，6/8 为两组附点四分（间隔 0.75 s）；录音后改 90→60 BPM、4/4→3/4→6/8，音符 tick 完全不变（和弦 tick 见 CH-08） |
@@ -140,7 +142,7 @@ KeyContext tonicPc, tonicSpelling, mode: major|minor, source: user|inferred, sta
 | 默认输出设备 | Audient iD4（USB，44.1 kHz）；非蓝牙。另有 DisplayPort 显示器输出 48 kHz |
 | Chrome | Google Chrome 153.0.8010.54（本机安装版），由 Playwright `channel: 'chrome'` 驱动，headless、`--mute-audio`；AudioContext 44100 Hz，baseLatency 5.8 ms，outputLatency（浏览器报告）16 ms |
 | WebKit | Playwright WebKit 26.6（构建 2359），headless；AudioContext 44100 Hz，baseLatency 2.9 ms，outputLatency 报告 0.3 ms（headless 下不代表真实设备） |
-| Safari.app | 26.5 已安装；**NOT RUN**：`safaridriver` 返回 “You must enable 'Allow remote automation'…”，需要用户在 Safari 设置 → 开发者中打开 |
+| Safari.app | 26.5 已安装；自动化未运行：`safaridriver` 返回 “You must enable 'Allow remote automation'…”。**用户人工测试通过**（按第 12 节第 7 步，2026-09-28 报告；该测试针对 2026-09-28 跟进改动之前的界面） |
 | 音源 | GeneralUser GS v2.0.3（第 3 节哈希） |
 | 听感 | **NOT RUN**：自动化只读取音频图电平；JS 调度时间不等于可感知延迟 |
 

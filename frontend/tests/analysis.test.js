@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { analyzeHarmony, keyCandidates, keyLabel, romanNumeral } from '../src/music/analysis.js'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { makeChord } from '../src/music/chords.js'
+import { parseProjectFile, trackNotes } from '../src/music/project.js'
+import { translate } from '../src/i18n/translate.js'
 
 const TS = { numerator: 4, denominator: 4 }
 const BAR = 3840
@@ -12,7 +16,8 @@ const events = (...specs) => specs.map((s, i) => {
 const key = (tonicSpelling, tonicPc, mode = 'major') => ({ tonicPc, tonicSpelling, mode, source: 'user', status: 'confirmed' })
 const run = (chords, keyContext = null, notes = []) => analyzeHarmony({ chords, notes, timeSignature: TS, keyContext, revision: 7 })
 const romans = (a, chords) => chords.map((e) => a.chords[e.id].display)
-const names = (a) => a.progressions.map((p) => p.name)
+const zh = (msg) => translate('zh', msg)
+const names = (a) => a.progressions.map((p) => zh(p.name))
 
 describe('Roman numerals in a confirmed key (CH-05)', () => {
   it('C–G–Am–F in C major is I–V–vi–IV (1–5–6m–4)', () => {
@@ -20,7 +25,7 @@ describe('Roman numerals in a confirmed key (CH-05)', () => {
     const a = run(chords, key('C', 0))
     expect(romans(a, chords)).toEqual(['I', 'V', 'vi', 'IV'])
     const pop = a.progressions.find((p) => p.text === 'I–V–vi–IV')
-    expect(pop.detail).toBe('I–V–vi–IV（1–5–6m–4）')
+    expect(zh(pop.detail)).toBe('I–V–vi–IV（1–5–6m–4）')
     expect(a.inputRevision).toBe(7)
     expect(a.key.tentative).toBe(false)
   })
@@ -29,7 +34,7 @@ describe('Roman numerals in a confirmed key (CH-05)', () => {
     const chords = events('D:m7', 'G:7', 'C:maj7')
     const a = run(chords, key('C', 0))
     expect(romans(a, chords)).toEqual(['ii7', 'V7', 'Imaj7'])
-    expect(a.progressions.find((p) => p.name === 'ii–V–I').text).toBe('ii7–V7–Imaj7')
+    expect(a.progressions.find((p) => zh(p.name) === 'ii–V–I').text).toBe('ii7–V7–Imaj7')
     expect(names(a)).not.toContain('正格终止') // V–I inside ii–V–I is not repeated
   })
 
@@ -52,7 +57,8 @@ describe('Roman numerals in a confirmed key (CH-05)', () => {
 
   it('keeps inversion, add, sus and seventh information in the numeral', () => {
     const k = key('C', 0)
-    expect(romanNumeral(makeChord('C', 'maj', 'E'), k)).toMatchObject({ base: 'I', text: 'I⁶', bassText: '三音低音' })
+    expect(romanNumeral(makeChord('C', 'maj', 'E'), k)).toMatchObject({ base: 'I', text: 'I⁶' })
+    expect(zh(romanNumeral(makeChord('C', 'maj', 'E'), k).bassText)).toBe('三音低音')
     expect(romanNumeral(makeChord('C', 'maj', 'G'), k).text).toBe('I⁶₄')
     expect(romanNumeral(makeChord('G', '7', 'B'), k).text).toBe('V⁶₅')
     expect(romanNumeral(makeChord('C', 'add9'), k).text).toBe('I add9')
@@ -95,7 +101,7 @@ describe('context explanations (CH-06)', () => {
     const chords = events('F:maj', 'F:min', 'C:maj')
     const a = run(chords, key('C', 0))
     expect(romans(a, chords)).toEqual(['IV', 'iv', 'I'])
-    expect(a.chords[chords[1].id].labels.join()).toMatch(/借用和弦（来自 C 小调）/)
+    expect(a.chords[chords[1].id].labels.map(zh).join()).toMatch(/借用和弦（来自 C 小调）/)
     expect(names(a)).toEqual(expect.arrayContaining(['借用小下属', '借用和弦']))
     const bb = events('Bb:maj', 'Bb:min', 'F:maj')
     expect(romans(run(bb, key('F', 5)), bb)).toEqual(['IV', 'iv', 'I'])
@@ -112,20 +118,20 @@ describe('context explanations (CH-06)', () => {
   it('infers keys from context when none is chosen and keeps relative-key alternatives', () => {
     const chords = events('C:maj', 'G:maj', 'A:min', 'F:maj')
     const a = run(chords)
-    expect(keyLabel(a.key)).toBe('C 大调')
+    expect(zh(keyLabel(a.key))).toBe('C 大调')
     expect(a.key.tentative).toBe(true)
-    expect(a.keyCandidates.map(keyLabel).slice(0, 2)).toEqual(['C 大调', 'A 小调'])
+    expect(a.keyCandidates.map((k) => zh(keyLabel(k))).slice(0, 2)).toEqual(['C 大调', 'A 小调'])
     const minor = events('A:min', 'D:min', 'E:7', 'A:min')
-    expect(keyLabel(run(minor).key)).toBe('A 小调')
+    expect(zh(keyLabel(run(minor).key))).toBe('A 小调')
     const moved = events('D:maj', 'A:maj', 'B:min', 'G:maj', 'A:7', 'D:maj')
-    expect(keyLabel(run(moved).key)).toBe('D 大调')
+    expect(zh(keyLabel(run(moved).key))).toBe('D 大调')
   })
 
   it('changing the surrounding chords changes the explanation of the same chord', () => {
     const inC = events('C:maj', 'D:7', 'G:maj', 'C:maj')
     const inG = events('G:maj', 'C:maj', 'D:7', 'G:maj')
-    expect(keyLabel(run(inC).key)).toBe('C 大调')
-    expect(keyLabel(run(inG).key)).toBe('G 大调')
+    expect(zh(keyLabel(run(inC).key))).toBe('C 大调')
+    expect(zh(keyLabel(run(inG).key))).toBe('G 大调')
     expect(run(inG).chords[inG[2].id].display).toBe('V7')
   })
 
@@ -134,7 +140,7 @@ describe('context explanations (CH-06)', () => {
       .map(([pitch, startTick, durationTick]) => ({ pitch, startTick, durationTick }))
     const { status, candidates } = keyCandidates([], notes, TS)
     expect(status).not.toBe('insufficient')
-    expect(keyLabel(candidates[0])).toBe('C 大调')
+    expect(zh(keyLabel(candidates[0]))).toBe('C 大调')
     expect(keyCandidates([], notes.slice(0, 2), TS).status).toBe('insufficient')
   })
 
@@ -142,7 +148,7 @@ describe('context explanations (CH-06)', () => {
     const chords = events('C:maj', 'F:maj', 'G:maj', 'C:maj', 'E:maj', 'A:maj', 'B:7', 'E:maj')
     const a = run(chords, key('C', 0))
     expect(a.modulationHints).toHaveLength(1)
-    expect(a.modulationHints[0].label).toMatch(/E 大调/)
+    expect(zh(a.modulationHints[0].label)).toMatch(/E 大调/)
     expect(a.modulationHints[0].startTick).toBeGreaterThanOrEqual(BAR * 3)
   })
 
@@ -153,5 +159,50 @@ describe('context explanations (CH-06)', () => {
     const a = run(chords, key('C', 0))
     expect(names(a)).not.toContain('正格终止')
     expect(a.chords.nc).toBeUndefined()
+  })
+})
+
+describe('whole progressions and repeated chords', () => {
+  it('repeated chords are one harmony for progression patterns and secondary dominants', () => {
+    const chords = events('D:m7', 'G:7', 'G:7', 'C:maj7')
+    const a = run(chords, key('C', 0))
+    expect(names(a)).toContain('ii–V–I')
+    expect(a.runs.map((r) => r.text)).toEqual(['ii7–V7–Imaj7'])
+    const sec = events('C:maj', 'D:7', 'D:7', 'G:maj')
+    const b = run(sec, key('C', 0))
+    expect(romans(b, sec)).toEqual(['I', 'V7/V', 'V7/V', 'V'])
+    expect(names(b).filter((n) => n === '副属和弦')).toHaveLength(1)
+  })
+
+  it('every run of chords gets its numeral sequence even when no named progression matches', () => {
+    const chords = events('C:maj', 'E:min', 'D:min', 'F:maj')
+    const a = run(chords, key('C', 0))
+    expect(a.progressions).toEqual([])
+    expect(a.runs).toEqual([{ startTick: 0, endTick: BAR * 4, text: 'I–iii–ii–IV', numbers: '1–3m–2m–4', tentative: false }])
+  })
+})
+
+// Reported 2026-09-28: the project below showed no progression at all. Its confirmed chords
+// C/E–Gm/D–F/C–F/C read as V⁶–ii⁶₄–I⁶₄ in the inferred F major, which matches no named pattern,
+// so the progression list stayed empty.
+describe('user project a02_same_program (progression was not shown)', () => {
+  const file = readFileSync(resolve(__dirname, 'fixtures/user_a02_same_program.flux.json'), 'utf8')
+  const project = parseProjectFile(file).project
+  const chords = project.chordTrack.filter((e) => e.status === 'confirmed')
+  const notes = project.tracks.filter((t) => !t.isDrum).flatMap(trackNotes)
+  const analyse = (keyContext) => analyzeHarmony({ chords, notes, timeSignature: project.timeSignature, keyContext, revision: project.revision })
+
+  it('shows the whole progression in the inferred key', () => {
+    const a = analyse(null)
+    expect(zh(keyLabel(a.key))).toBe('F 大调')
+    expect(a.key.tentative).toBe(true)
+    expect(chords.map((e) => a.chords[e.id].display)).toEqual(['V⁶', 'ii⁶₄', 'I⁶₄', 'I⁶₄'])
+    expect(a.runs).toEqual([{ startTick: 0, endTick: 15360, text: 'V⁶–ii⁶₄–I⁶₄', numbers: '5–2m–1', tentative: false }])
+  })
+
+  it('reads the same chords in C major once that key is confirmed', () => {
+    const a = analyse(key('C', 0))
+    expect(a.runs.map((r) => r.text)).toEqual(['I⁶–v⁶₄–IV⁶₄'])
+    expect(names(a)).toEqual(['借用和弦'])
   })
 })

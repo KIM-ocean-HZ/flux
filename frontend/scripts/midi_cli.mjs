@@ -3,27 +3,33 @@
 //   node scripts/midi_cli.mjs export <project.json> <out.mid>
 //   node scripts/midi_cli.mjs import <in.mid> <out.json>
 import { readFileSync, writeFileSync } from 'node:fs'
+import { translate } from '../src/i18n/translate.js'
 import { exportMidi, importMidi, planExport } from '../src/music/midi.js'
 import { parseProjectFile } from '../src/music/project.js'
+
+// Messages are written as Chinese text, the page's default language.
+const text = (list) => list?.map((msg) => translate('zh', msg))
 
 const [command, input, output] = process.argv.slice(2)
 if (command === 'export') {
   const parsed = parseProjectFile(readFileSync(input, 'utf8'))
   if (!parsed.ok) {
-    console.error(parsed.errors.join('\n'))
+    console.error(text(parsed.errors).join('\n'))
     process.exit(2)
   }
   const plan = planExport(parsed.project)
   if (!plan.ok) {
-    console.error(plan.errors.join('\n'))
+    console.error(text(plan.errors).join('\n'))
     process.exit(3)
   }
-  for (const w of plan.warnings) console.error(`warning: ${w}`)
+  for (const w of text(plan.warnings)) console.error(`warning: ${w}`)
   writeFileSync(output, exportMidi(parsed.project, plan))
   console.log(JSON.stringify({ channels: Object.fromEntries(plan.channels) }))
 } else if (command === 'import') {
   const result = importMidi(new Uint8Array(readFileSync(input)), { name: 'imported' })
-  writeFileSync(output, JSON.stringify(result, null, 2))
+  writeFileSync(output, JSON.stringify({
+    ...result, errors: text(result.errors), limitations: text(result.limitations), notices: text(result.notices),
+  }, null, 2))
   process.exit(result.ok ? 0 : 4)
 } else {
   console.error('usage: midi_cli.mjs export <project.json> <out.mid> | import <in.mid> <out.json>')
