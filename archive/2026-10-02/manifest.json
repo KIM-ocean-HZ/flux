@@ -1,0 +1,161 @@
+{
+  "date": "2026-10-02",
+  "reason": "2026-09-30 导师会谈后研究方向改为 docs/research/RESEARCH_DESIGN_2026-10-02.md；以下研究顺序、推荐与会谈材料已被取代。",
+  "records": [
+    {
+      "original_path": "docs/CLAUDE_RESEARCH_PROMPT.md",
+      "archived_path": "archive/2026-10-02/docs/CLAUDE_RESEARCH_PROMPT.md",
+      "original_sha256": "aaa9041eb5eb4d6126af98fce7de1a0449b2c2a41119547a8c2a95b2c81e4f12",
+      "original_bytes": 15733,
+      "notice": "2026-09-26 独立调研轮使用的提示词。该轮已完成，不是当前任务。",
+      "prefix_bytes": 482
+    },
+    {
+      "original_path": "docs/HANDOFF_A_2026-09-27.md",
+      "archived_path": "archive/2026-10-02/docs/HANDOFF_A_2026-09-27.md",
+      "original_sha256": "6f2e772756578324d241229d9c14d0b89ebe2ab58f3e05ba32b50fcb4610d65c",
+      "original_bytes": 16353,
+      "notice": "阶段 A 的执行交接（可听工作台与和弦输入）。A 阶段已交付，交付与跟进记录仍在 docs/；文中“当前计划”指已存档的 RESEARCH_RESET。当前执行交接见 HANDOFF_R1，顺序见工作计划 2026-10-02。文中三处链接已在 2026-10-02 改指存档位置。",
+      "prefix_bytes": 697
+    },
+    {
+      "original_path": "docs/RESEARCH_RESET_2026-09-26.md",
+      "archived_path": "archive/2026-10-02/docs/RESEARCH_RESET_2026-09-26.md",
+      "original_sha256": "c6633e84784577b1231f907e129c5dcec20c74f6f60e7c040661af0a8bca24fc",
+      "original_bytes": 11753,
+      "notice": "2026-09-26 的工作顺序入口（A → B：R0 → E0 → 模型比较 → 适配）。A 阶段已交付；研究顺序已被 2026-10-02 研究设计取代，R0 不再作为研究基线，B 阶段范围待重定。文中 AMT 管线缺陷诊断（生成终点取最后 onset、首个 50 ms control 被裁、混轨后来源配对不唯一等）在重新使用 AMT 时仍然有效。",
+      "prefix_bytes": 780
+    },
+    {
+      "original_path": "docs/claude_research/2026-09-26/CROSS_REVIEW.md",
+      "archived_path": "archive/2026-10-02/docs/claude_research/2026-09-26/CROSS_REVIEW.md",
+      "original_sha256": "8a0eef0755f26f2e4fb43f8888674e18b9b889bed4090c3dee693f117150d7f9",
+      "original_bytes": 15205,
+      "notice": "2026-09-26 独立调研与当时报告的逐项交叉核对；保留为证据，不是当前计划。",
+      "prefix_bytes": 532
+    },
+    {
+      "original_path": "docs/claude_research/2026-09-26/DAW_REVIEW.md",
+      "archived_path": "archive/2026-10-02/docs/claude_research/2026-09-26/DAW_REVIEW.md",
+      "original_sha256": "ccd2c2957a1e74874f424ce13d9509d776dd8c6163e179175b3df2398708f3d0",
+      "original_bytes": 29819,
+      "notice": "2026-09-26 的 DAW 交互审查；A 阶段已据当时规格交付，本文不是当前计划。",
+      "prefix_bytes": 525
+    },
+    {
+      "original_path": "docs/claude_research/2026-09-26/EXPERIMENT_PLAN.md",
+      "archived_path": "archive/2026-10-02/docs/claude_research/2026-09-26/EXPERIMENT_PLAN.md",
+      "original_sha256": "04c9a3a75c29b962c223d934de1a6c70ad38f8d3390d6fa91d8a5c707a9fefd4",
+      "original_bytes": 24194,
+      "notice": "2026-09-26 的实验计划；已被 2026-10-02 研究设计中的 RQ1／RQ2 实验设计取代。",
+      "prefix_bytes": 531
+    },
+    {
+      "original_path": "docs/claude_research/2026-09-26/INDEPENDENT_REPORT.md",
+      "archived_path": "archive/2026-10-02/docs/claude_research/2026-09-26/INDEPENDENT_REPORT.md",
+      "original_sha256": "3815c4005ced7ca71fb5789ff47f0b28f0f1374ae0e84e26fade2e8b1d716f79",
+      "original_bytes": 72597,
+      "notice": "2026-09-26 独立调研原稿。其中 R0 先行、AMT／MIDI-GPT 比较顺序、Jev／LLM 路线等推荐已被 2026-10-02 研究设计取代，关键模型、许可与数据事实已转入新文档第 9 节；保留为证据。",
+      "prefix_bytes": 666
+    },
+    {
+      "original_path": "docs/claude_research/2026-09-26/SOURCES.md",
+      "archived_path": "archive/2026-10-02/docs/claude_research/2026-09-26/SOURCES.md",
+      "original_sha256": "e94333b192d874c6189b7fa5bcc789cba279d8ab45b80bc35300431cec5dbea5",
+      "original_bytes": 18020,
+      "notice": "2026-09-26 调研的来源与核查日期；版本与许可可能已变化，引用前重新核查。",
+      "prefix_bytes": 527
+    },
+    {
+      "original_path": "docs/research/FLUX_RESEARCH_SCOPE_2026-09-30.md",
+      "archived_path": "archive/2026-10-02/docs/research/FLUX_RESEARCH_SCOPE_2026-09-30.md",
+      "original_sha256": "7e0ff573e5fce7cbd6aa2b99bcef9b30e58df4ec068dbce201741b427ba60406",
+      "original_bytes": 28383,
+      "notice": "2026-09-30 会后的范围候选报告（A 最小必要修订、B 和声控制、C 轻量适配、D HCI）。已被 2026-10-02 研究设计取代：主线改为“以 motif 为起点、意图可选的多轨补全”，“最小必要修订”降为测试任务之一。文中对 MIDI-GPT v0.3.4、许可与版本锁定的核查仍可参考。",
+      "prefix_bytes": 764
+    },
+    {
+      "original_path": "docs/research/LLM_TOOLS_2026-09-26.md",
+      "archived_path": "archive/2026-10-02/docs/research/LLM_TOOLS_2026-09-26.md",
+      "original_sha256": "961d0b7c5312cf92d57ff105a14abc361c4d1dbcfe2d3991f6e9d9451794bea2",
+      "original_bytes": 24523,
+      "notice": "2026-09-26 Jev、LLM、MCP、CLI 路线调研。均不在当前研究范围内，仅作长期产品参考。",
+      "prefix_bytes": 520
+    },
+    {
+      "original_path": "docs/research/MODELS_DATASETS_2026-09-26.md",
+      "archived_path": "archive/2026-10-02/docs/research/MODELS_DATASETS_2026-09-26.md",
+      "original_sha256": "17c3825f21353f4f1c05dfb52cd68c3a9ce7a7cf2d7a1a7c0f2d8f1c3e447624",
+      "original_bytes": 30429,
+      "notice": "2026-09-26 模型与数据集背景报告。“R0 先行、AMT 基线、MIDI-GPT 为新增候选”的顺序已被取代，现以 MIDI-GPT 为主模型。注意 POP909 只有旋律、bridge、钢琴三轨，没有 bass 和鼓。关键许可与版本事实已转入研究设计第 9 节。",
+      "prefix_bytes": 706
+    },
+    {
+      "original_path": "docs/research/RESEARCH_REVIEW_2026-09-26.md",
+      "archived_path": "archive/2026-10-02/docs/research/RESEARCH_REVIEW_2026-09-26.md",
+      "original_sha256": "9228c62984f206b3e235445943f102969499506356b581d940694c6411503e5c",
+      "original_bytes": 13772,
+      "notice": "2026-09-26 调研复评与 E0–E7 实验修订。实验顺序已被 2026-10-02 研究设计取代；来源边界与许可核查可作参考。",
+      "prefix_bytes": 561
+    },
+    {
+      "original_path": "docs/supervision-2026-09-30/FLUX_SUPERVISOR_BRIEF.docx",
+      "archived_path": "archive/2026-10-02/docs/supervision-2026-09-30/FLUX_SUPERVISOR_BRIEF.docx",
+      "original_sha256": "ec42794560e5c2d98725fba388f7dc4b1338d3b394e0475191db7b8b4008d276",
+      "original_bytes": 216530,
+      "notice": "2026-09-30 导师简报的 Word 版本。会后研究方向已改，见 2026-10-02 研究设计。",
+      "notice_path": "archive/2026-10-02/docs/supervision-2026-09-30/FLUX_SUPERVISOR_BRIEF.docx.NOTICE.md"
+    },
+    {
+      "original_path": "docs/supervision-2026-09-30/FLUX_SUPERVISOR_BRIEF.md",
+      "archived_path": "archive/2026-10-02/docs/supervision-2026-09-30/FLUX_SUPERVISOR_BRIEF.md",
+      "original_sha256": "8add318948facd81f94217a42a8cd15905be2ca10178989db2c47cceaed1460e",
+      "original_bytes": 35323,
+      "notice": "2026-09-30 会谈前给导师的英文背景简报。会后研究方向已改：不再以“旋律＋确认和弦→bass，并与规则 R0 比较”为主线，R0 退出研究对比；当前方向见 2026-10-02 研究设计。文中对已实现工作台的描述仍可用于“已有工作”声明，测试数字是 2026-09-29 的记录。",
+      "prefix_bytes": 767
+    },
+    {
+      "original_path": "docs/supervision-2026-09-30/FLUX_SUPERVISOR_BRIEF.pdf",
+      "archived_path": "archive/2026-10-02/docs/supervision-2026-09-30/FLUX_SUPERVISOR_BRIEF.pdf",
+      "original_sha256": "95c7d8e9188fdd2fdfd572b09390f1c34b70fbc6adb84f540bd8290eb6431d3a",
+      "original_bytes": 406857,
+      "notice": "2026-09-30 导师简报的 PDF 版本。会后研究方向已改，见 2026-10-02 研究设计。",
+      "notice_path": "archive/2026-10-02/docs/supervision-2026-09-30/FLUX_SUPERVISOR_BRIEF.pdf.NOTICE.md"
+    },
+    {
+      "original_path": "docs/supervision-2026-09-30/Flux_Discussion_Brief_2026-09-30.docx",
+      "archived_path": "archive/2026-10-02/docs/supervision-2026-09-30/Flux_Discussion_Brief_2026-09-30.docx",
+      "original_sha256": "630c9f1973fa0ff4cf22f9666445e985c020d9f5efd999356a1913a61e7ab60b",
+      "original_bytes": 317215,
+      "notice": "2026-09-30 会谈讨论稿。会后结论（AI 或 HCI 方向均可、先定 scope 与 research goal、规则 bass 生成器本身是大项目）已写入 2026-10-02 研究设计。",
+      "notice_path": "archive/2026-10-02/docs/supervision-2026-09-30/Flux_Discussion_Brief_2026-09-30.docx.NOTICE.md"
+    },
+    {
+      "original_path": "docs/supervision-2026-09-30/MEETING_PREP_ZH.md",
+      "archived_path": "archive/2026-10-02/docs/supervision-2026-09-30/MEETING_PREP_ZH.md",
+      "original_sha256": "0905e5956dc5f802be0663a464e9f2d041a36e8e4cdab304ad2a0841a1abed9f",
+      "original_bytes": 9473,
+      "notice": "2026-09-30 会谈的中文准备笔记。会议已举行，演示路线与讨论要点不再作为执行依据。",
+      "prefix_bytes": 534
+    },
+    {
+      "original_path": "docs/supervision-2026-09-30/VERIFICATION_SMOKE.json",
+      "archived_path": "archive/2026-10-02/docs/supervision-2026-09-30/VERIFICATION_SMOKE.json",
+      "original_sha256": "8e169fefe004588784ca906b8dff57f2da4abe6f6caeab1c4364f9210d66c86d",
+      "original_bytes": 461,
+      "notice": "2026-09-29 简报所附的无头浏览器冒烟检查记录，只是当时的工程证据，不代表人工试听。",
+      "notice_path": "archive/2026-10-02/docs/supervision-2026-09-30/VERIFICATION_SMOKE.json.NOTICE.md"
+    },
+    {
+      "original_path": "docs/supervision-2026-09-30/workbench.png",
+      "archived_path": "archive/2026-10-02/docs/supervision-2026-09-30/workbench.png",
+      "original_sha256": "59845ffafe5e1f0f740e7376182ae45f84be72a2d68ad2f6900aba6940bae1d5",
+      "original_bytes": 168091,
+      "notice": "2026-09-29 简报所用的工作台截图。",
+      "notice_path": "archive/2026-10-02/docs/supervision-2026-09-30/workbench.png.NOTICE.md"
+    }
+  ],
+  "untracked_extras_moved": [
+    "docs/claude_research/.DS_Store"
+  ]
+}

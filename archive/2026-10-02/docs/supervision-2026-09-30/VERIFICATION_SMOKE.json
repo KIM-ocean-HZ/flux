@@ -1,0 +1,24 @@
+{
+  "date": "2026-09-29",
+  "browser": "154.0.8037.58",
+  "url": "http://127.0.0.1:8000/",
+  "state": {
+    "tracks": 4,
+    "notes": 76,
+    "chords": [
+      "C/E",
+      "Gm/D",
+      "F/C",
+      "F/C"
+    ],
+    "coverage": {
+      "melodic": 128,
+      "drumKit": true,
+      "presets": 287
+    },
+    "transport": "stopped"
+  },
+  "peak": 0.06877037225402109,
+  "errors": [],
+  "note": "Headless audio-graph smoke check; no human listening assessment."
+}
