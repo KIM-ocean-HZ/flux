@@ -11,6 +11,7 @@ wheels/
 
 # Local-only project notes (not pushed)
 CLAUDE.md
+AGENTS.md
 plans/
 
 # Generated / downloaded artifacts (reproducible from scripts)
@@ -19,3 +20,6 @@ data/
 # Frontend
 frontend/node_modules/
 frontend/dist/
+
+# macOS metadata
+.DS_Store
